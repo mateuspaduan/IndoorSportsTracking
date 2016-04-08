@@ -3,6 +3,13 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="Buscar Dispositivos"
+        android:id="@+id/searchdevices"/>
+
+
     <TextView
         android:id="@+id/bluetoothstate"
         android:layout_width="match_parent"

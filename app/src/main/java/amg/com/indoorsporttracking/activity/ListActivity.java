@@ -1,5 +1,6 @@
 package amg.com.indoorsporttracking.activity;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -9,15 +10,17 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.Set;
 
-import amg.com.indoorsporttracking.Adapter.DeviceListAdapter;
 import amg.com.indoorsporttracking.R;
 import amg.com.indoorsporttracking.model.DeviceItem;
 
@@ -31,9 +34,10 @@ public class ListActivity extends AppCompatActivity {
     private ListView pairedDevicesList, unknownDevicesList;
     private TextView bluetoothState;
     private BluetoothAdapter bluetoothAdapter;
-    private ArrayList pairedList, unknownList;
+    private Button searchDevices;
+    private ArrayAdapter<String> pairedList, unknownList;
     private Set<BluetoothDevice> pairedDevices;
-    private ArrayAdapter<DeviceItem> pairedAdapter, unknwonAdapter;
+
 
 
     @Override
@@ -41,35 +45,32 @@ public class ListActivity extends AppCompatActivity {
         super.onCreate(saveInstanceState);
         setContentView(R.layout.list_activity);
 
-        pairedDevicesList = (ListView) findViewById(R.id.paireddeviceslist);
-        unknownDevicesList = (ListView) findViewById(R.id.unknowndeviceslist);
         bluetoothState = (TextView) findViewById(R.id.bluetoothstate);
 
-        pairedList = new ArrayList<>();
-        unknownList = new ArrayList<>();
+        searchDevices = (Button) findViewById(R.id.searchdevices);
+        searchDevices.setOnClickListener(discoverButtonHandler);
+
+        pairedDevicesList = (ListView) findViewById(R.id.paireddeviceslist);
+        pairedList = new ArrayAdapter<String>
+                (this, android.R.layout.simple_list_item_1);
+        pairedDevicesList.setAdapter(pairedList);
+        pairedDevicesList.setClickable(true);
+
+        unknownDevicesList = (ListView) findViewById(R.id.unknowndeviceslist);
+        unknownList = new ArrayAdapter<String>
+                (this, android.R.layout.simple_list_item_1);
+        unknownDevicesList.setAdapter(unknownList);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        unknwonAdapter = new DeviceListAdapter(this, unknownList, bluetoothAdapter);
-        pairedAdapter = new DeviceListAdapter(this, pairedList, bluetoothAdapter);
+        pairedDevices = bluetoothAdapter.getBondedDevices();
 
-        unknownDevicesList.setAdapter(unknwonAdapter);
-        pairedDevicesList.setAdapter(pairedAdapter);
-
-        bluetoothAdapter.startDiscovery();
         CheckBluetoothState();
     }
 
     void CheckBluetoothState(){
         if(bluetoothAdapter == null) bluetoothState.setText("O dispositivo não suporta Bluetooth");
         else if(bluetoothAdapter.isEnabled()){
-            if(bluetoothAdapter.isDiscovering()){
-                bluetoothState.setText("Descobrindo dispositivos");
-            }
-            else{
-                bluetoothState.setText("Pronto para listar dispositivos pareados");
-                listPairedDevices();
-                listUnkownDevices();
-            }
+            bluetoothState.setText("BT habilitado");
         }
         else{
             bluetoothState.setText("Bluetooth não habilitado!");
@@ -82,38 +83,49 @@ public class ListActivity extends AppCompatActivity {
         pairedDevices = bluetoothAdapter.getBondedDevices();
         if(pairedDevices.size() > 0){
             for(BluetoothDevice device : pairedDevices){
-                DeviceItem newDevice = new DeviceItem(device.getName(), device.getAddress(), "false");
-                pairedList.add(newDevice);
+                String content = device.getName() + " - " + device.getAddress();
+                pairedList.add(content);
             }
         }
     }
 
-    void listUnkownDevices(){
-        unknwonAdapter.clear();
-
-        final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if(BluetoothDevice.ACTION_FOUND.equals(action)){
-                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_NAME);
-                    DeviceItem newDevice = new DeviceItem(device.getName(), device.getAddress(), "false");
-                    unknownList.add(newDevice);
-                }
-            }
-        };
-
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        this.registerReceiver(broadcastReceiver, filter);
+    void  listUnknownDevices(){
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_FOUND);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(broadcastReceiver, filter);
     }
 
+    View.OnClickListener discoverButtonHandler = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            pairedList.clear();
+            unknownList.clear();
+            bluetoothAdapter.startDiscovery();
+            listPairedDevices();
+            listUnknownDevices();
+        }
+    };
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        if(requestCode == REQUEST_ENABLE_BT) CheckBluetoothState();
-        /*else if(requestCode == REQUEST_PAIRED_DEVICES) {
-
-        }*/
+        if(requestCode == REQUEST_ENABLE_BT){
+            CheckBluetoothState();
+        }
     }
 
+    final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if(BluetoothDevice.ACTION_FOUND.equals(action)){
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_NAME);
+                unknownList.add(device.getName() + " - " + device.getAddress());
+                if(device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    unknownList.add(device.getName()+" - " + device.getAddress() + "\n");
+                }
+            }
+        }
+    };
 }
