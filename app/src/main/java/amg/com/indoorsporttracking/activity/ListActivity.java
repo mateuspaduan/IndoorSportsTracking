@@ -1,6 +1,7 @@
 package amg.com.indoorsporttracking.activity;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -37,7 +38,7 @@ public class ListActivity extends AppCompatActivity {
     private Button searchDevices;
     private ArrayAdapter<String> pairedList, unknownList;
     private Set<BluetoothDevice> pairedDevices;
-
+    private ProgressDialog progressDialog;
 
 
     @Override
@@ -71,6 +72,7 @@ public class ListActivity extends AppCompatActivity {
         if(bluetoothAdapter == null) bluetoothState.setText("O dispositivo não suporta Bluetooth");
         else if(bluetoothAdapter.isEnabled()){
             bluetoothState.setText("BT habilitado");
+            if(bluetoothAdapter.isDiscovering()) bluetoothState.setText("Buscando dispositivos");
         }
         else{
             bluetoothState.setText("Bluetooth não habilitado!");
@@ -119,6 +121,10 @@ public class ListActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            /*if(BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action))
+                progressDialog = ProgressDialog.show(getApplicationContext(), "Aguarde", "Buscando dispositivos próximos...");
+            else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action))
+                progressDialog.dismiss();*/
             if(BluetoothDevice.ACTION_FOUND.equals(action)){
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 unknownList.add(device.getName() + " - " + device.getAddress());
