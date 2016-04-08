@@ -120,11 +120,11 @@ public class ListActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if(BluetoothDevice.ACTION_FOUND.equals(action)){
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_NAME);
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 unknownList.add(device.getName() + " - " + device.getAddress());
-                if(device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                /*if(device.getBondState() != BluetoothDevice.BOND_BONDED) {
                     unknownList.add(device.getName()+" - " + device.getAddress() + "\n");
-                }
+                }*/
             }
         }
     };
