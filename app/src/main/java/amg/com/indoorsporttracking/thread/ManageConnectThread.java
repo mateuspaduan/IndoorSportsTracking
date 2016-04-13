@@ -22,7 +22,7 @@ public class ManageConnectThread extends Thread{
         outputStream.write(output.toByteArray());
     }
 
-    public int receiveDAta(BluetoothSocket socket) throws IOException{
+    public int receiveData(BluetoothSocket socket) throws IOException{
 
         byte[] buffer = new byte[10];
         ByteArrayInputStream input = new ByteArrayInputStream(buffer);

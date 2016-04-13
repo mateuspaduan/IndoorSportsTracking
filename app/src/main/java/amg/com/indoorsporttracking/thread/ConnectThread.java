@@ -34,7 +34,7 @@ public class ConnectThread extends Thread{
         return true;
     }
 
-    public boolean cancel(){
+    public boolean close(){
 
         try{
             bTSocket.close();

@@ -1,8 +1,5 @@
 package amg.com.indoorsporttracking.model;
 
-/**
- * Created by lucas on 06/04/2016.
- */
 public class DeviceItem {
     private String deviceName;
     private String address;
