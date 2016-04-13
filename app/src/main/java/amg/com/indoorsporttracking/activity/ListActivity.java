@@ -128,7 +128,7 @@ public class ListActivity extends AppCompatActivity {
     View.OnClickListener discoverButtonHandler = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-
+            //click botao
         }
     };
 
