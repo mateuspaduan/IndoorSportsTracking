@@ -31,35 +31,26 @@ public class ListActivity extends AppCompatActivity {
     private Button searchDevices;
     private ArrayAdapter<String> pairedAdapter, unknownAdapter;
     private Set<BluetoothDevice> pairedDevices;
-    private ArrayList<BluetoothDevice> pairedArrayList;
+    private ArrayList<BluetoothDevice> pairedArrayList, unknwonArrayList;
     //private ProgressDialog progressDialog;
 
 
     @Override
-    public void onCreate(Bundle saveInstanceState){
+    public void onCreate(Bundle saveInstanceState) {
         super.onCreate(saveInstanceState);
         setContentView(R.layout.list_activity);
 
-        StartBluetoothDiscover();
+        InitiateBluetoothActivity();
         CheckBluetoothState();
+        StartBluetoothDiscover();
     }
 
-    void CheckBluetoothState(){
-        if(bluetoothAdapter == null) bluetoothState.setText("O dispositivo não suporta Bluetooth");
-        else if(bluetoothAdapter.isEnabled()){
-            bluetoothState.setText("BT habilitado");
-            if(bluetoothAdapter.isDiscovering()){
-                bluetoothState.setText("Buscando dispositivos");
-                listUnknownDevices();
-            }
-        }
-        else{
-            bluetoothState.setText("Bluetooth não habilitado!");
-            requestEnableBluetooth();
-        }
+    void CheckBluetoothState() {
+        if (bluetoothAdapter == null) bluetoothState.setText("O dispositivo não suporta Bluetooth");
+        else if (!bluetoothAdapter.isEnabled()) requestEnableBluetooth();
     }
 
-    void StartBluetoothDiscover(){
+    void InitiateBluetoothActivity() {
         bluetoothState = (TextView) findViewById(R.id.bluetoothstate);
         searchDevices = (Button) findViewById(R.id.searchdevices);
         searchDevices.setOnClickListener(discoverButtonHandler);
@@ -79,6 +70,10 @@ public class ListActivity extends AppCompatActivity {
         pairedDevices = bluetoothAdapter.getBondedDevices();
 
         pairedArrayList = new ArrayList<>();
+        unknwonArrayList = new ArrayList<>();
+    }
+
+    void StartBluetoothDiscover(){
         pairedAdapter.clear();
         unknownAdapter.clear();
         bluetoothAdapter.startDiscovery();
@@ -139,9 +134,9 @@ public class ListActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        //if(requestCode == REQUEST_ENABLE_BT){
-            CheckBluetoothState();
-        //}
+        if(requestCode == REQUEST_ENABLE_BT){
+            requestEnableBluetooth();
+        }
     }
 
     final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -156,6 +151,7 @@ public class ListActivity extends AppCompatActivity {
             else if(BluetoothDevice.ACTION_FOUND.equals(action)){
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 unknownAdapter.add(device.getName() + " - " + device.getAddress());
+                unknwonArrayList.add(device);
             }
         }
     };
