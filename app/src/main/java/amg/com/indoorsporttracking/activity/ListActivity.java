@@ -16,6 +16,8 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import amg.com.indoorsporttracking.R;
@@ -32,6 +34,7 @@ public class ListActivity extends AppCompatActivity {
     private Button searchDevices;
     private ArrayAdapter<String> pairedAdapter, unknownAdapter;
     private Set<BluetoothDevice> pairedDevices;
+    private ArrayList<BluetoothDevice> pairedArrayList;
     //private ProgressDialog progressDialog;
 
 
@@ -78,6 +81,7 @@ public class ListActivity extends AppCompatActivity {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         pairedDevices = bluetoothAdapter.getBondedDevices();
 
+        pairedArrayList = new ArrayList<>();
         pairedAdapter.clear();
         unknownAdapter.clear();
         bluetoothAdapter.startDiscovery();
@@ -96,6 +100,7 @@ public class ListActivity extends AppCompatActivity {
             for(BluetoothDevice device : pairedDevices){
                 String content = device.getName() + " - " + device.getAddress();
                 pairedAdapter.add(content);
+                pairedArrayList.add(device);
             }
         }
     }
@@ -144,10 +149,6 @@ public class ListActivity extends AppCompatActivity {
                 bluetoothState.setText("Buscando dispositivos");
             else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
                 bluetoothState.setText("Busca concluída");
-            }
-            else if(BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)){
-                if(BluetoothAdapter.EXTRA_STATE.equals("STATE_OFF")
-                        || BluetoothAdapter.EXTRA_STATE.equals("STATE_TURNING_OFF")) requestEnableBluetooth();
             }
             else if(BluetoothDevice.ACTION_FOUND.equals(action)){
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
