@@ -118,7 +118,7 @@ public class ListActivity extends AppCompatActivity {
             BluetoothDevice device =  pairedArrayList.get(position);
             ParcelUuid[] parcelUuid = device.getUuids();
             makeConnection.connect(device, parcelUuid[position].getUuid());
-            //manageConnectThread.receiveData(BluetoothSocket socket);
+            //manageConnectThread.receiveData(socket);
             makeConnection.close();
         }
     };
