@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import amg.com.indoorsporttracking.R;
+import amg.com.indoorsporttracking.thread.*;
 
 /**
  * Created by lucas on 06/04/2016.
@@ -116,7 +117,13 @@ public class ListActivity extends AppCompatActivity {
     AdapterView.OnItemClickListener pairedClickHandler = new AdapterView.OnItemClickListener(){
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            pairedDevicesList.getItemAtPosition(position);
+            //pairedDevicesList.getItemAtPosition(position);
+            BluetoothDevice device;
+            ConnectThread makeConnection = new ConnectThread();
+            ManageConnectThread manageConnectThread = new ManageConnectThread();
+            makeConnection.connect(device, pairedArrayList.get(position).getUuids();
+            //receiveData(
+            //makeConnection.close();
         }
     };
 
