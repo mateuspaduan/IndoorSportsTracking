@@ -53,6 +53,7 @@ Thumbs.db
 
 # Intellij IDEA
 .idea/
+.idea
 
 # IDEA specific files
 #.idea/workspace.xml
