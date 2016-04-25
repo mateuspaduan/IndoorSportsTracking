@@ -10,6 +10,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity {
+    
+    private AdvertiseData advertiseData;
+    private AdvertiseSettings advertiseSettings;
+    private AdversiteCallback advertiseCallback;
+    private BluetoothLeAdvertiser bluetoothLeAdvertiser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,13 +22,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        
+        //************** INSTANCIAR O ADVERTISER ****************
+        
+        //************** INSTANCIAR O ADVERTISER ****************
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                bluetoothLeAdvertiser.startAdvertising(advertiseData, advertiseSettings, advertiseCallback);
             }
         });
         
@@ -39,9 +47,26 @@ public class MainActivity extends AppCompatActivity {
         manufacturerData.put(0, (byte) 0x02); //FIRST BYTE iBeacon
         manufacturerData.put(1, (byte) 0x15); //SECOND BYTE iBeacon
         for(int i=2; i<18; i++) manufacturerData.put(i, uuid[i-2]); //UUID
-        manufacturerData.put(18, (byte));
-        manufacturerData.put(18, (byte));
-        manufacturerData.put(18, (byte));
+        manufacturerData.put(18, (byte) 0x00); //FIRST BYTE Major
+        manufacturerData.put(19, (byte) 0x09); //SECOND BYTE Major
+        manufacturerData.put(20, (byte) 0x00); //FIRST BYTE Minor
+        manufacturerData.put(21, (byte) 0x06); //SECOND BYTE Minor
+        manufacturerData.put(22, (byte) 0xB5); //Reference TX Power
+        mBuilder.addManufacturerData(224, manufacturerData.array()); //Using Google ID
+        advertiseData = mBuilder.build();
+    }
+    
+    private void setAdvertiseSettings(){
+        AdvertiseSettings.Builder mBuilder = new AdvertiseSettings.Builder();
+        mBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
+        mBuilder.setConnectable(false);
+        mBuilder.setTimeout(0);
+        mBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM);
+        advertiseSettings = mBuilder.build();
+    }
+    
+    private void setAdvertiseCallback(){
+        //IMPLEMENTAR METODOS OBRIGATORIOS
     }
     
     private byte[] getIdAsByte(UUID uuid)
