@@ -1,4 +1,4 @@
-package com.amg.beaconagt.adapter;
+package com.amg.ibeaconfinder.adapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -6,8 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.amg.beaconagt.R;
-import com.amg.beaconagt.model.Beacon;
+import com.amg.ibeaconfinder.R;
+import com.amg.ibeaconfinder.model.Beacon;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.amg.beaconagt.model;
+package com.amg.ibeaconfinder.model;
 
 /**
  * Created by Lucas on 24/04/2016.

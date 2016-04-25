@@ -1,4 +1,4 @@
-package com.amg.beaconagt;
+package com.amgsis.ibeaconemitter;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

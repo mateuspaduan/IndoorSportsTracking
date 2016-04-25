@@ -1,4 +1,4 @@
-package com.amg.beaconagt.activity;
+package com.amg.ibeaconfinder.activity;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -19,9 +19,9 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.amg.beaconagt.R;
-import com.amg.beaconagt.adapter.BeaconAdapter;
-import com.amg.beaconagt.model.Beacon;
+import com.amg.ibeaconfinder.R;
+import com.amg.ibeaconfinder.adapter.BeaconAdapter;
+import com.amg.ibeaconfinder.model.Beacon;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
