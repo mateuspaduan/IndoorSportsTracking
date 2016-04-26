@@ -22,8 +22,8 @@ public class BeaconNotification{
 
     public void notificate(double accuracy){
 
-        if (accuracy < 1) new BeaconSound(3);
-        else if (accuracy < 3) new BeaconSound(1);
+        if (accuracy < 1) new BeaconSound(1);
+        else if (accuracy < 3) new BeaconSound(3);
         else new BeaconSound(6);
     }
 }
