@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
+import com.amg.ibeaconfinder.util.BeaconNotification;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private ScanFilter scanFilter;
     private ScanSettings scanSettings;
     private ScanCallback scanCallback;
+    private BeaconNotification beaconNotification;
     List<Beacon> BeaconList;
 
     @Override
@@ -116,13 +118,13 @@ public class MainActivity extends AppCompatActivity {
                     String minor = data.substring(40, 43);
                     String txPower = data.substring(44, 45);
                     String rssi = Integer.toString(mRssi);
-                    //String distance = Double.toString(CalculateDistance(Integer.parseInt(txPower), mRssi));
+                    String distance = Double.toString(beaconNotification.calculateAccuracy(Integer.parseInt(txPower), mRssi));
 
                     beacon.setUuid(uuid);
                     beacon.setMajor(major);
                     beacon.setMinor(minor);
                     beacon.setRssi(rssi);
-                    //beacon.setDistance(distance);
+                    beacon.setDistance(distance);
 
                     BeaconList.add(beacon);
                 }
