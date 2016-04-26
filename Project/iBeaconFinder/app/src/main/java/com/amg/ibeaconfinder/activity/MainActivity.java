@@ -116,13 +116,13 @@ public class MainActivity extends AppCompatActivity {
                     String minor = data.substring(40, 43);
                     String txPower = data.substring(44, 45);
                     String rssi = Integer.toString(mRssi);
-                    String distance = Double.toString(CalculateDistance(Integer.parseInt(txPower), mRssi));
+                    //String distance = Double.toString(CalculateDistance(Integer.parseInt(txPower), mRssi));
 
                     beacon.setUuid(uuid);
                     beacon.setMajor(major);
                     beacon.setMinor(minor);
                     beacon.setRssi(rssi);
-                    beacon.setDistance(distance);
+                    //beacon.setDistance(distance);
 
                     BeaconList.add(beacon);
                 }
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private double CalculateDistance(int txPower, int rssi){
+    /*private double CalculateDistance(int txPower, int rssi){
         if (rssi == 0) {
             return -1.0; // if we cannot determine accuracy, return -1.
         }
@@ -175,8 +175,8 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     return "Far";
                 }
-                }*/
-    }
+                }
+    }*/
 
     private byte[] getIdAsByte(UUID uuid)
     {
