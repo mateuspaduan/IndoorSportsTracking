@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 byte[] manufactuterData = scanRecord.getManufacturerSpecificData(224);
                 int mRssi = result.getRssi();
 
-                if(manufactuterData[0] == (byte)0x02 && manufactuterData[1] == (byte)0x15){
+                //if(manufactuterData[0] == (byte)0x02 && manufactuterData[1] == (byte)0x15){
                     Beacon beacon = new Beacon();
                     String data = manufactuterData.toString();
 
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
                 to make sure they match your protocol.
                 The 16 following ones will be your UUID, the 2 next your major,
                 2 more for your minor, and finally your tx power / reference RSSI.*/
-            }
+            //}
 
             @Override
             public void onScanFailed(int errorCode) {
@@ -153,34 +153,6 @@ public class MainActivity extends AppCompatActivity {
         };
 
     }
-
-    /*private double CalculateDistance(int txPower, int rssi){
-        if (rssi == 0) {
-            return -1.0; // if we cannot determine accuracy, return -1.
-        }
-        double ratio = rssi*1.0/txPower;
-        if (ratio < 1.0) {
-            return Math.pow(ratio,10);
-        }
-        else {
-            double accuracy =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
-            return accuracy;
-        }
-
-                /*The next step is to classify the distance into “Immediate”, “Near” and “Far” zones
-
-                private String getDistance(accuracy) {
-                if (accuracy == -1.0) {
-                    return "Unknown";
-                } else if (accuracy < 1) {
-                    return "Immediate";
-                } else if (accuracy < 3) {
-                    return "Near";
-                } else {
-                    return "Far";
-                }
-                }
-    }*/
 
     private byte[] getIdAsByte(UUID uuid)
     {
