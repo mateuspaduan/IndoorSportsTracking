@@ -120,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
                     String rssi = Integer.toString(mRssi);
                     String distance = Double.toString(beaconNotification.calculateAccuracy(Integer.parseInt(txPower), mRssi));
 
+                    beaconNotification.notificate(Double.parseDouble(distance));
+
                     beacon.setUuid(uuid);
                     beacon.setMajor(major);
                     beacon.setMinor(minor);

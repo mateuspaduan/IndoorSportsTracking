@@ -10,12 +10,11 @@ import java.util.TimerTask;
 
 public class BeaconSound {
 
-    Timer timer;
+    Timer timer = new Timer();
     public Context context;
 
     public BeaconSound(int seconds){
 
-        timer = new Timer();
         timer.schedule(new NotificationTask(), 0, seconds);
     }
 
