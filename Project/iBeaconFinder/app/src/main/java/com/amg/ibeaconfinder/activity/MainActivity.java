@@ -1,23 +1,31 @@
 package com.amg.ibeaconfinder.activity;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ParcelUuid;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
@@ -25,19 +33,44 @@ import com.amg.ibeaconfinder.model.Beacon;
 import com.amg.ibeaconfinder.util.BeaconNotification;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 1;
-    private BluetoothAdapter btAdapter;
-    private BluetoothLeScanner btLeScanner;
-    private ScanFilter scanFilter;
-    private ScanSettings scanSettings;
-    private ScanCallback scanCallback;
-    private BeaconNotification beaconNotification;
+    private static final String TAG = "MainActivity";
+    private static final int SCAN_INTERVAL_MS = 10000;
+    boolean isScanning = false;
+    private Handler scanHandler;
+
+    BluetoothManager btManager;
+    BluetoothAdapter btAdapter;
+    BluetoothLeScanner btLeScanner;
+
+    ScanCallback scanCallback;
+    BeaconAdapter beaconAdapter;
+
     List<Beacon> BeaconList;
+
+    private static final ScanSettings SCAN_SETTINGS =
+            new ScanSettings.Builder().
+                    setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .setReportDelay(0)
+                    .build();
+
+    private static final ScanFilter SCAN_FILTER = new ScanFilter.Builder()
+            .build();
+
+    private static final List<ScanFilter> SCAN_FILTERS = buildScanFilters();
+
+    private static List<ScanFilter> buildScanFilters() {
+        List<ScanFilter> scanFilters = new ArrayList<>();
+        scanFilters.add(SCAN_FILTER);
+        return scanFilters;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,32 +89,102 @@ public class MainActivity extends AppCompatActivity {
         LinearLayoutManager llm = new LinearLayoutManager(this);
         llm.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(llm);
-        BeaconAdapter beaconAdapter = new BeaconAdapter(BeaconList);
+        beaconAdapter = new BeaconAdapter(BeaconList);
         recyclerView.setAdapter(beaconAdapter);
 
         // SEARCH BUTTON
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(fabClick);
 
-        // BEACON SCAN
-        btAdapter = BluetoothAdapter.getDefaultAdapter();
-        btLeScanner = btAdapter.getBluetoothLeScanner();
+        // HANDLER
+        scanHandler = new Handler();
+
+        // SCAN CALLBACK
+        scanCallback = new ScanCallback() {
+            @Override
+            public void onScanResult(int callbackType, ScanResult result) {
+                ScanRecord scanRecord = result.getScanRecord();
+                if (scanRecord == null) {
+                    Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
+                    return;
+                }
+
+                Map<ParcelUuid, byte[]> serviceData = scanRecord.getServiceData();
+                if (serviceData == null) {
+                    return;
+                }
+
+                Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
+
+                // We're only interested in the UID frame time since we need the beacon ID to register.
+/*                if (serviceData[0] != EDDYSTONE_UID_FRAME_TYPE) {
+                    return;
+                }*/
+
+                // Extract the beacon ID from the service data. Offset 0 is the frame type, 1 is the
+                // Tx power, and the next 16 are the ID.
+                // See https://github.com/google/eddystone/eddystone-uid for more information.
+/*                byte[] id = Arrays.copyOfRange(serviceData, 2, 18);
+                if (arrayListContainsId(arrayList, id)) {
+                    return;
+                }*/
+
+                // Draw it immediately and kick off a async request to fetch the registration status,
+                // redrawing when the server returns.
+/*                Log.i(TAG, "id " + Utils.toHexString(id) + ", rssi " + result.getRssi());
+
+                Beacon beacon = new Beacon("EDDYSTONE", id, Beacon.STATUS_UNSPECIFIED, result.getRssi());
+                insertIntoListAndFetchStatus(beacon);*/
+            }
+
+            @Override
+            public void onScanFailed(int errorCode) {
+                Log.e(TAG, "onScanFailed errorCode " + errorCode);
+                Toast.makeText(MainActivity.this, "Failure", Toast.LENGTH_SHORT).show();
+            }
+        };
+        createScanner();
+    }
+
+    void createScanner(){
+        // BLUETOOTH
+        btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        btAdapter = btManager.getAdapter();
         checkBluetoothState();
-        setScanFilter();
-        setScanSettings();
-        setScanCallback();
+        btLeScanner = btAdapter.getBluetoothLeScanner();
     }
 
     private void checkBluetoothState(){
         if (btAdapter == null)
             Snackbar.make(findViewById(R.id.coordinatorLayout), "Seu dispositivo não suporta Bluetooth!", Snackbar.LENGTH_LONG).show();
-        else if (!btAdapter.isEnabled()){
+        else if (!btAdapter.isEnabled() || btAdapter == null){
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
         }
     }
 
-    private void setScanFilter(){
+    View.OnClickListener fabClick = new View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            Snackbar.make(findViewById(R.id.coordinatorLayout), "Buscando beacons...", Snackbar.LENGTH_LONG).show();
+            if(!isScanning){
+                btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
+                isScanning = true;
+
+                scanHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        isScanning = false;
+                        btLeScanner.stopScan(scanCallback);
+                        Log.i(TAG, "stoping scan");
+                    }
+                }, SCAN_INTERVAL_MS);
+            }
+        }
+    };
+
+
+/*    private void setScanFilter(){
         ScanFilter.Builder mBuilder = new ScanFilter.Builder(); //Filtro
         ByteBuffer manufacturerData = ByteBuffer.allocate(24); //PDU BLE do Beacon
         ByteBuffer manufacturerDataMask = ByteBuffer.allocate(24); //Mascara p/ PDU
@@ -99,12 +202,13 @@ public class MainActivity extends AppCompatActivity {
         mBuilder.setReportDelay(0);
         mBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_POWER);
         scanSettings = mBuilder.build();
-    }
+    }*/
 
-    private void setScanCallback(){
+ /*   private void setScanCallback(){
         scanCallback = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
+                Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_SHORT).show();
                 ScanRecord scanRecord = result.getScanRecord();
                 byte[] manufactuterData = scanRecord.getManufacturerSpecificData(224);
                 int mRssi = result.getRssi();
@@ -128,47 +232,47 @@ public class MainActivity extends AppCompatActivity {
                     beacon.setRssi(rssi);
                     beacon.setDistance(distance);
 
+                    Log.i("MainActivity","UUID: " +uuid + "\\nmajor: " +major +"\\nminor" +minor);
+
                     BeaconList.add(beacon);
+                    beaconAdapter.notifyDataSetChanged();
                 }
 
                 //TRABALHAR AQUI COM O BYTE PARA ENCONTRAR CADA DADO DO BEACON
-               /* The manufacturer specific data is extracted for a given company identifier,
+               *//* The manufacturer specific data is extracted for a given company identifier,
                 in this example 224 is the official bluetooth google company identifier.
                 It is represented as an array of integers.
                 All you need to do now is extract the first 2 bytes
                 to make sure they match your protocol.
                 The 16 following ones will be your UUID, the 2 next your major,
-                2 more for your minor, and finally your tx power / reference RSSI.*/
+                2 more for your minor, and finally your tx power / reference RSSI.*//*
             //}
 
             @Override
             public void onScanFailed(int errorCode) {
+                Toast.makeText(MainActivity.this, Integer.toString(errorCode), Toast.LENGTH_SHORT).show();
                 super.onScanFailed(errorCode);
             }
 
             @Override
             public void onBatchScanResults(List<ScanResult> results) {
+                Toast.makeText(MainActivity.this, "BATCH", Toast.LENGTH_SHORT).show();
                 super.onBatchScanResults(results);
             }
         };
 
-    }
+    }*/
 
-    private byte[] getIdAsByte(UUID uuid)
+
+
+/*    private byte[] getIdAsByte(UUID uuid)
     {
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
         bb.putLong(uuid.getMostSignificantBits());
         bb.putLong(uuid.getLeastSignificantBits());
         return bb.array();
-    }
+    }*/
 
-    View.OnClickListener fabClick = new View.OnClickListener(){
-        @Override
-        public void onClick(View v) {
-            Snackbar.make(findViewById(R.id.coordinatorLayout), "Buscando beacons...", Snackbar.LENGTH_LONG).show();
-            btLeScanner.startScan(Arrays.asList(scanFilter), scanSettings, scanCallback);
-        }
-    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
