@@ -108,13 +108,21 @@ public class MainActivity extends AppCompatActivity {
                     Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
                     return;
                 }
-
-                Map<ParcelUuid, byte[]> serviceData = scanRecord.getServiceData();
-                if (serviceData == null) {
-                    return;
-                }
+                byte[] manufacturerData = scanRecord.getManufacturerSpecificData(224);
 
                 Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
+
+                Beacon beacon = new Beacon();
+                beacon.setUuid("uuid");
+                beacon.setMajor("major");
+                beacon.setMinor("minor");
+                beacon.setRssi("rssi");
+                beacon.setDistance("distancia");
+
+                /*Log.i("MainActivity","UUID: " +uuid + "\\nmajor: " +major +"\\nminor" +minor);*/
+
+                BeaconList.add(beacon);
+                beaconAdapter.notifyDataSetChanged();
 
                 // We're only interested in the UID frame time since we need the beacon ID to register.
 /*                if (serviceData[0] != EDDYSTONE_UID_FRAME_TYPE) {
