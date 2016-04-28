@@ -9,15 +9,16 @@ import android.widget.TextView;
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.model.Beacon;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Lucas on 24/04/2016.
  */
 public class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.BeaconViewHolder>{
-    private List<Beacon> beaconList;
+    private ArrayList<Beacon> beaconList;
 
-    public BeaconAdapter(List<Beacon> beaconList){
+    public BeaconAdapter(ArrayList<Beacon> beaconList){
         this.beaconList = beaconList;
     }
 

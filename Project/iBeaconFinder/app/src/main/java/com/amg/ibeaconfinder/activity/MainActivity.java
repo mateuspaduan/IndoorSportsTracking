@@ -22,6 +22,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     ScanCallback scanCallback;
     BeaconAdapter beaconAdapter;
 
-    List<Beacon> BeaconList;
+    ArrayList<Beacon> BeaconList;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -83,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setTitle(R.string.app_name);
         toolbar.setLogo(R.mipmap.ic_launcher);
 
-        // BEACON LIST
+        // BEACON LIST;
+        BeaconList = new ArrayList<>();
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.cardList);
         recyclerView.setHasFixedSize(true);
         LinearLayoutManager llm = new LinearLayoutManager(this);
@@ -99,58 +101,8 @@ public class MainActivity extends AppCompatActivity {
         // HANDLER
         scanHandler = new Handler();
 
-        // SCAN CALLBACK
-        scanCallback = new ScanCallback() {
-            @Override
-            public void onScanResult(int callbackType, ScanResult result) {
-                ScanRecord scanRecord = result.getScanRecord();
-                if (scanRecord == null) {
-                    Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
-                    return;
-                }
-                byte[] manufacturerData = scanRecord.getManufacturerSpecificData(224);
-
-                Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
-
-                Beacon beacon = new Beacon();
-                beacon.setUuid("uuid");
-                beacon.setMajor("major");
-                beacon.setMinor("minor");
-                beacon.setRssi("rssi");
-                beacon.setDistance("distancia");
-
-                /*Log.i("MainActivity","UUID: " +uuid + "\\nmajor: " +major +"\\nminor" +minor);*/
-
-                BeaconList.add(beacon);
-                beaconAdapter.notifyDataSetChanged();
-
-                // We're only interested in the UID frame time since we need the beacon ID to register.
-/*                if (serviceData[0] != EDDYSTONE_UID_FRAME_TYPE) {
-                    return;
-                }*/
-
-                // Extract the beacon ID from the service data. Offset 0 is the frame type, 1 is the
-                // Tx power, and the next 16 are the ID.
-                // See https://github.com/google/eddystone/eddystone-uid for more information.
-/*                byte[] id = Arrays.copyOfRange(serviceData, 2, 18);
-                if (arrayListContainsId(arrayList, id)) {
-                    return;
-                }*/
-
-                // Draw it immediately and kick off a async request to fetch the registration status,
-                // redrawing when the server returns.
-/*                Log.i(TAG, "id " + Utils.toHexString(id) + ", rssi " + result.getRssi());
-
-                Beacon beacon = new Beacon("EDDYSTONE", id, Beacon.STATUS_UNSPECIFIED, result.getRssi());
-                insertIntoListAndFetchStatus(beacon);*/
-            }
-
-            @Override
-            public void onScanFailed(int errorCode) {
-                Log.e(TAG, "onScanFailed errorCode " + errorCode);
-                Toast.makeText(MainActivity.this, "Failure", Toast.LENGTH_SHORT).show();
-            }
-        };
+        // SCAN CALLBACK AND SCANNER
+        setScanCallback();
         createScanner();
     }
 
@@ -192,95 +144,103 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
-/*    private void setScanFilter(){
-        ScanFilter.Builder mBuilder = new ScanFilter.Builder(); //Filtro
-        ByteBuffer manufacturerData = ByteBuffer.allocate(24); //PDU BLE do Beacon
-        ByteBuffer manufacturerDataMask = ByteBuffer.allocate(24); //Mascara p/ PDU
-        byte[] uuid = getIdAsByte(UUID.fromString("0CF052C2-97CA-407C-84F8-B62AAC4E9020"));
-        manufacturerData.put(0, (byte) 0x02);
-        manufacturerData.put(1, (byte) 0x15);
-        for(int i=2; i<18; i++) manufacturerData.put(i, uuid[i-2]);
-        for(int i=0; i<18; i++) manufacturerDataMask.put((byte)0x01);
-        mBuilder.setManufacturerData(224, manufacturerData.array(), manufacturerDataMask.array());
-        scanFilter = mBuilder.build();
-    }
+   private void setScanCallback() {
+       scanCallback = new ScanCallback() {
+           @Override
+           public void onScanResult(int callbackType, ScanResult result) {
+               Log.i("MainActivity", "Callback: Success");
+               ScanRecord scanRecord = result.getScanRecord();
+               if (scanRecord == null) {
+                   Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
+                   return;
+               }
+               else{
+/*                   byte[] manufacturerData = scanRecord.getManufacturerSpecificData(76); //GETING BEACON PDU
+                   byte[] uuidBytes = new byte[8]; // UUID ARRAY
+                   System.arraycopy(manufacturerData, 0, uuidBytes, 0,8); // COPYING UUID BYTES
+                   char[] data = new char[8];
+                   StringBuilder sb = new StringBuilder();
+                   for(int i=0; i<7; i++){
+                       data[i] = (char) uuidBytes[i];
+                       sb.append(data[i]);
+                   }
+                   String dataString = sb.toString();
+                   Log.i("MainActivity", dataString);*/
 
-    private void setScanSettings(){
-        ScanSettings.Builder mBuilder = new ScanSettings.Builder();
-        mBuilder.setReportDelay(0);
-        mBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_POWER);
-        scanSettings = mBuilder.build();
-    }*/
+                   //byte[] uuidBytes = new byte[8]; // UUID ARRAY
+                   //System.arraycopy(manufacturerData, 0, uuidBytes, 0, 8); // COPYING UUID BYTES
+                   //String hexString = bytesToHex(uuidBytes); // CREATING UUID STRING
+                   //SEPARATING UUID STRING
+/*                   String uuid =  hexString.substring(0,8) + "-" +
+                           hexString.substring(8,12) + "-" +
+                           hexString.substring(12,16) + "-" +
+                           hexString.substring(16,20) + "-" +
+                           hexString.substring(20,32);*/
 
- /*   private void setScanCallback(){
-        scanCallback = new ScanCallback() {
-            @Override
-            public void onScanResult(int callbackType, ScanResult result) {
-                Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_SHORT).show();
-                ScanRecord scanRecord = result.getScanRecord();
-                byte[] manufactuterData = scanRecord.getManufacturerSpecificData(224);
-                int mRssi = result.getRssi();
+                   // MAJOR
+//                   final int major = (manufacturerData[20] & 0xff) * 0x100 + (manufacturerData[21] & 0xff);
 
-                //if(manufactuterData[0] == (byte)0x02 && manufactuterData[1] == (byte)0x15){
-                    Beacon beacon = new Beacon();
-                    String data = manufactuterData.toString();
+                   // MINOR
+//                   final int minor = (manufacturerData[22] & 0xff) * 0x100 + (manufacturerData[23] & 0xff);
 
-                    String uuid = data.substring(4, 35);
-                    String major = data.substring(36, 39);
-                    String minor = data.substring(40, 43);
-                    String txPower = data.substring(44, 45);
-                    String rssi = Integer.toString(mRssi);
-                    String distance = Double.toString(beaconNotification.calculateAccuracy(Integer.parseInt(txPower), mRssi));
-
-                    beaconNotification.notificate(Double.parseDouble(distance));
-
-                    beacon.setUuid(uuid);
-                    beacon.setMajor(major);
-                    beacon.setMinor(minor);
-                    beacon.setRssi(rssi);
-                    beacon.setDistance(distance);
-
-                    Log.i("MainActivity","UUID: " +uuid + "\\nmajor: " +major +"\\nminor" +minor);
-
-                    BeaconList.add(beacon);
-                    beaconAdapter.notifyDataSetChanged();
-                }
-
-                //TRABALHAR AQUI COM O BYTE PARA ENCONTRAR CADA DADO DO BEACON
-               *//* The manufacturer specific data is extracted for a given company identifier,
-                in this example 224 is the official bluetooth google company identifier.
-                It is represented as an array of integers.
-                All you need to do now is extract the first 2 bytes
-                to make sure they match your protocol.
-                The 16 following ones will be your UUID, the 2 next your major,
-                2 more for your minor, and finally your tx power / reference RSSI.*//*
-            //}
-
-            @Override
-            public void onScanFailed(int errorCode) {
-                Toast.makeText(MainActivity.this, Integer.toString(errorCode), Toast.LENGTH_SHORT).show();
-                super.onScanFailed(errorCode);
-            }
-
-            @Override
-            public void onBatchScanResults(List<ScanResult> results) {
-                Toast.makeText(MainActivity.this, "BATCH", Toast.LENGTH_SHORT).show();
-                super.onBatchScanResults(results);
-            }
-        };
-
-    }*/
+                   //----------------------------------------------------------------------------------------------//
 
 
 
-/*    private byte[] getIdAsByte(UUID uuid)
-    {
-        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
-        bb.putLong(uuid.getMostSignificantBits());
-        bb.putLong(uuid.getLeastSignificantBits());
-        return bb.array();
-    }*/
+                   Beacon beacon = new Beacon();
+                   beacon.setUuid("Name: " + scanRecord.getDeviceName());
+                   beacon.setMajor("Address: " + result.getDevice().getAddress());
+                   beacon.setMinor("UUID??? : ");
+                   beacon.setRssi("RSSI: " + result.getRssi());
+                   beacon.setDistance("distancia");
 
+                   //Log.i("MainActivity","UUID: " +uuid + "\\nmajor: " +major +"\\nminor" +minor);
+
+                   BeaconList.add(beacon);
+                   beaconAdapter.notifyDataSetChanged();
+               }
+
+
+               // We're only interested in the UID frame time since we need the beacon ID to register.
+/*                if (serviceData[0] != EDDYSTONE_UID_FRAME_TYPE) {
+                    return;
+                }*/
+
+               // Extract the beacon ID from the service data. Offset 0 is the frame type, 1 is the
+               // Tx power, and the next 16 are the ID.
+               // See https://github.com/google/eddystone/eddystone-uid for more information.
+/*                byte[] id = Arrays.copyOfRange(serviceData, 2, 18);
+                if (arrayListContainsId(arrayList, id)) {
+                    return;
+                }*/
+
+               // Draw it immediately and kick off a async request to fetch the registration status,
+               // redrawing when the server returns.
+/*                Log.i(TAG, "id " + Utils.toHexString(id) + ", rssi " + result.getRssi());
+
+                Beacon beacon = new Beacon("EDDYSTONE", id, Beacon.STATUS_UNSPECIFIED, result.getRssi());
+                insertIntoListAndFetchStatus(beacon);*/
+           }
+
+           @Override
+           public void onScanFailed(int errorCode) {
+               Log.e(TAG, "onScanFailed errorCode " + errorCode);
+           }
+       };
+   }
+
+   static final char[] hexArray = "0123456789ABCDEF".toCharArray();
+   private static String bytesToHex(byte[] bytes)
+   {
+       char[] hexChars = new char[bytes.length * 2];
+       for ( int j = 0; j < bytes.length; j++ )
+       {
+           int v = bytes[j] & 0xFF;
+           hexChars[j * 2] = hexArray[v >>> 4];
+           hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+       }
+       return new String(hexChars);
+   }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
