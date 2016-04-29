@@ -26,6 +26,7 @@ import android.view.MenuItem;
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
+import com.amg.ibeaconfinder.util.BeaconNotification;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int SCAN_INTERVAL_MS = 10000;
     boolean isScanning = false;
     private Handler scanHandler;
+
+    BeaconNotification beaconNotification;
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
@@ -156,15 +159,20 @@ public class MainActivity extends AppCompatActivity {
                    int major = twoBytesToShort(manufacturerData[22], manufacturerData[23]);
                    int minor = twoBytesToShort(manufacturerData[24], manufacturerData[25]);
                    int txPower = manufacturerData[26]&0xff;
+                   //double ssi = toDouble(manufacturerData[]);
 
-                   Log.i("MainActivity", "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor + "\\ntxPower: " + txPower);
+                   //double distance = beaconNotification.calculateAccuracy(txPower, ssi);
+
+                   Log.i("MainActivity", "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor + "\\ntxPower: " + txPower); // + "\\distance: " + distance);
 
                    Beacon beacon = new Beacon();
                    beacon.setUuid(uuid);
                    beacon.setMajor(Integer.toString(major));
                    beacon.setMinor(Integer.toString(minor));
                    beacon.setRssi(Integer.toString(result.getRssi()));
-                   beacon.setDistance("Calcular");
+                   beacon.setDistance("Distância"); //String.valueOf(distance)
+
+                   //beaconNotification.notificate(distance);
 
                    boolean found = false;
                    for(int i=0; i<beaconList.size(); i++){
@@ -194,6 +202,10 @@ public class MainActivity extends AppCompatActivity {
         long low = bb.getLong();
         UUID uuid = new UUID(high, low);
         return uuid.toString();
+    }
+
+    public static double toDouble(byte[] bytes) {
+        return ByteBuffer.wrap(bytes).getDouble();
     }
 
     public static short twoBytesToShort(byte b1, byte b2) {
