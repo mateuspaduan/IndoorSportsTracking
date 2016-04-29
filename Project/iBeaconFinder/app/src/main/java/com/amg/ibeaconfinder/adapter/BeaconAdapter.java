@@ -23,7 +23,7 @@ public class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.BeaconView
     }
 
     @Override
-    public BeaconViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public BeaconAdapter.BeaconViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView =
                 LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.beacon_list, parent, false);
@@ -42,7 +42,7 @@ public class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.BeaconView
 
     @Override
     public int getItemCount() {
-        return 0;
+        return beaconList.size();
     }
 
     public static class BeaconViewHolder extends RecyclerView.ViewHolder{
@@ -54,11 +54,11 @@ public class BeaconAdapter extends RecyclerView.Adapter<BeaconAdapter.BeaconView
 
         public BeaconViewHolder(View view){
             super(view);
-            this.uuid = (TextView) view.findViewById(R.id.uuid);
-            this.minor = (TextView) view.findViewById(R.id.minor);
-            this.major = (TextView) view.findViewById(R.id.major);
-            this.rssi = (TextView) view.findViewById(R.id.rssi);
-            this.distance = (TextView) view.findViewById(R.id.distance);
+            uuid = (TextView) view.findViewById(R.id.uuid);
+            minor = (TextView) view.findViewById(R.id.minor);
+            major = (TextView) view.findViewById(R.id.major);
+            rssi = (TextView) view.findViewById(R.id.rssi);
+            distance = (TextView) view.findViewById(R.id.distance);
         }
     }
 }
