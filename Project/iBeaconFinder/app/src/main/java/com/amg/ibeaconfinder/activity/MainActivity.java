@@ -10,6 +10,9 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
@@ -19,18 +22,20 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
-import com.amg.ibeaconfinder.util.BeaconNotification;
+//import com.amg.ibeaconfinder.util.BeaconSound;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     boolean isScanning = false;
     private Handler scanHandler;
 
-    BeaconNotification beaconNotification;
+    Timer timer = new Timer();
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
@@ -133,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         isScanning = false;
                         btLeScanner.stopScan(scanCallback);
-                        Log.i(TAG, "stoping scan");
+                        Log.i(TAG, "stopping scan");
                     }
                 }, SCAN_INTERVAL_MS);
             }
@@ -152,27 +157,28 @@ public class MainActivity extends AppCompatActivity {
                    return;
                }
                else{
-                   byte[] manufacturerData = scanRecord.getBytes(); //GETING BEACON PDU
+                   byte[] manufacturerData = scanRecord.getBytes(); //GETTING BEACON PDU
                    byte[] uuidBytes = new byte[16]; // UUID ARRAY
                    System.arraycopy(manufacturerData, 6, uuidBytes, 0, 16); // COPYING UUID BYTES
                    String uuid = getGuidFromByteArray(uuidBytes);
                    int major = twoBytesToShort(manufacturerData[22], manufacturerData[23]);
                    int minor = twoBytesToShort(manufacturerData[24], manufacturerData[25]);
                    int txPower = manufacturerData[26]&0xff;
-                   //double ssi = toDouble(manufacturerData[]);
+                   double rssi = result.getRssi();
 
-                   //double distance = beaconNotification.calculateAccuracy(txPower, ssi);
-
-                   Log.i("MainActivity", "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor + "\\ntxPower: " + txPower); // + "\\distance: " + distance);
+                   //Log.i("MainActivity", "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor + "\\ntxPower: " + txPower); // + "\\distance: " + distance);
 
                    Beacon beacon = new Beacon();
+                   double distance = beacon.calculateAccuracy(txPower, rssi);
                    beacon.setUuid(uuid);
                    beacon.setMajor(Integer.toString(major));
                    beacon.setMinor(Integer.toString(minor));
                    beacon.setRssi(Integer.toString(result.getRssi()));
-                   beacon.setDistance("Distância"); //String.valueOf(distance)
+                   beacon.setDistance(String.valueOf(distance) + "m");
 
-                   //beaconNotification.notificate(distance);
+                   /*if(distance < 1) beaconSound(3);
+                   else if(distance < 3) beaconSound(6);
+                   else beaconSound(9);*/
 
                    boolean found = false;
                    for(int i=0; i<beaconList.size(); i++){
@@ -195,6 +201,25 @@ public class MainActivity extends AppCompatActivity {
            }
        };
    }
+
+    public void beaconSound(int seconds) {
+
+        timer.schedule(new NotificationTask(), 0, seconds);
+    }
+
+    class NotificationTask extends TimerTask {
+
+        public void run() {
+
+            try {
+                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+                r.play();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public static String getGuidFromByteArray(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
