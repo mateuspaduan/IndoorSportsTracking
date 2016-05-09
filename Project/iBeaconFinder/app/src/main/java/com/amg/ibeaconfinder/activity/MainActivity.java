@@ -171,18 +171,6 @@ public class MainActivity extends AppCompatActivity {
                    beacon.setRssi(Integer.toString(result.getRssi()));
                    beacon.setDistance(String.format("%.2f", distance) + "m");
 
-                   if(distance < 1){
-                       beaconSound(3);
-                   }
-                   else if(distance < 3){
-                       timer.cancel();
-                       beaconSound(6);
-                   }
-                   else{
-                       timer.cancel();
-                       beaconSound(9);
-                   }
-
                    boolean found = false;
                    for(int i=0; i<beaconList.size(); i++){
                        if(beaconList.get(i).getUuid().equals(uuid)){
@@ -195,6 +183,18 @@ public class MainActivity extends AppCompatActivity {
 
                    if(!found) beaconList.add(beacon);
                    beaconAdapter.notifyDataSetChanged();
+
+                   if(distance < 1){
+                       beaconSound(3);
+                   }
+                   else if(distance < 3){
+                       timer.cancel();
+                       beaconSound(6);
+                   }
+                   else{
+                       timer.cancel();
+                       beaconSound(9);
+                   }
                }
            }
 
