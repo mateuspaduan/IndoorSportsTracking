@@ -209,8 +209,8 @@ public class MainActivity extends AppCompatActivity {
 
         public void run() {
 
-          ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
-          toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
+          ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
+          toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
         }
     }
 
