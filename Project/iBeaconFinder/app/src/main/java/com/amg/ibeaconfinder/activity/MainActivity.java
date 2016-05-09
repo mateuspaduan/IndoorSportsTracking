@@ -172,15 +172,15 @@ public class MainActivity extends AppCompatActivity {
                    beacon.setDistance(String.format("%.2f", distance) + "m");
 
                    if(distance < 1){
-                     beaconSound(3);
+                       beaconSound(3);
                    }
                    else if(distance < 3){
-                     //NotificationTask.cancel();
-                     beaconSound(6);
+                       timer.cancel();
+                       beaconSound(6);
                    }
                    else{
-                     //NotificationTask.cancel();
-                     beaconSound(9);
+                       timer.cancel();
+                       beaconSound(9);
                    }
 
                    boolean found = false;
