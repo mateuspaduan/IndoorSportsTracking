@@ -10,9 +10,8 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
@@ -29,7 +28,6 @@ import android.view.View;
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
-//import com.amg.ibeaconfinder.util.BeaconSound;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -94,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(llm);
         beaconAdapter = new BeaconAdapter(beaconList);
         recyclerView.setAdapter(beaconAdapter);
-
 
         // SEARCH BUTTON
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -166,19 +163,25 @@ public class MainActivity extends AppCompatActivity {
                    int txPower = manufacturerData[26]&0xff;
                    double rssi = result.getRssi();
 
-                   //Log.i("MainActivity", "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor + "\\ntxPower: " + txPower); // + "\\distance: " + distance);
-
                    Beacon beacon = new Beacon();
                    double distance = beacon.calculateAccuracy(txPower, rssi);
                    beacon.setUuid(uuid);
                    beacon.setMajor(Integer.toString(major));
                    beacon.setMinor(Integer.toString(minor));
                    beacon.setRssi(Integer.toString(result.getRssi()));
-                   beacon.setDistance(String.valueOf(distance) + "m");
+                   beacon.setDistance(String.format("%.2f", distance) + "m");
 
-                   /*if(distance < 1) beaconSound(3);
-                   else if(distance < 3) beaconSound(6);
-                   else beaconSound(9);*/
+                   if(distance < 1){
+                     beaconSound(3);
+                   }
+                   else if(distance < 3){
+                     //NotificationTask.cancel();
+                     beaconSound(6);
+                   }
+                   else{
+                     //NotificationTask.cancel();
+                     beaconSound(9);
+                   }
 
                    boolean found = false;
                    for(int i=0; i<beaconList.size(); i++){
@@ -211,13 +214,8 @@ public class MainActivity extends AppCompatActivity {
 
         public void run() {
 
-            try {
-                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-                r.play();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+          ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
+          toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
         }
     }
 
