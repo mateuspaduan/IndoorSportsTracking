@@ -185,12 +185,10 @@ public class MainActivity extends AppCompatActivity {
                    if(!found) beaconList.add(beacon);
                    beaconAdapter.notifyDataSetChanged();
 
-
-                   timer.cancel();
                    if(distance < 1) beaconSound(3);
                    else if(distance < 3) beaconSound(6);
                    else beaconSound(9);
-
+                   timer.cancel();
                }
            }
 
