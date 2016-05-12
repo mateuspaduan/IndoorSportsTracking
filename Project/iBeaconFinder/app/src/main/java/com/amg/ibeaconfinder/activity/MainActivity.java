@@ -185,9 +185,9 @@ public class MainActivity extends AppCompatActivity {
                    if(!found) beaconList.add(beacon);
                    beaconAdapter.notifyDataSetChanged();
 
-                   if(distance < 1) beaconSound(2);
-                   else if(distance < 3) beaconSound(5);
-                   else beaconSound(9);
+                   if(distance < 1) beaconNotification(2);
+                   else if(distance < 3) beaconNotification(5);
+                   else beaconNotification(9);
                    timer.cancel();
                }
            }
@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
        };
    }
 
-    public void beaconSound(int seconds) {
+    public void beaconNotification(int seconds) {
 
         timer.schedule(new NotificationTask(), 0, seconds);
     }
@@ -208,8 +208,8 @@ public class MainActivity extends AppCompatActivity {
 
         public void run() {
 
-          ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
-          toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
+            ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
         }
     }
 
