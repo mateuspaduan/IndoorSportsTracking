@@ -53,9 +53,9 @@ public class Beacon {
     public double calculateAccuracy(int txPower, double rssi) {
 
         if (rssi == 0)
-            return -1.0; // if we cannot determine accuracy, return -1.
+            return -1.0;
 
-        double ratio = rssi * 1.0 / txPower;
+        double ratio = rssi*1.0/txPower;
         if (ratio < 1.0)
             return Math.pow(ratio, 10);
 

@@ -30,6 +30,7 @@ import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
 
 import java.nio.ByteBuffer;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                    beacon.setMajor(Integer.toString(major));
                    beacon.setMinor(Integer.toString(minor));
                    beacon.setRssi(Integer.toString(result.getRssi()));
-                   beacon.setDistance(String.format("%.2f", distance) + "m");
+                   beacon.setDistance(String.valueOf(round(distance, 4))+ "m");
 
                    boolean found = false;
                    for(int i=0; i<beaconList.size(); i++){
@@ -184,12 +185,12 @@ public class MainActivity extends AppCompatActivity {
                    if(!found) beaconList.add(beacon);
                    beaconAdapter.notifyDataSetChanged();
 
-                   while(true){
-                       timer.cancel();
-                       if(distance < 1) beaconSound(3);
-                       else if(distance < 3) beaconSound(6);
-                       else beaconSound(9);
-                   }
+
+                   timer.cancel();
+                   if(distance < 1) beaconSound(3);
+                   else if(distance < 3) beaconSound(6);
+                   else beaconSound(9);
+
                }
            }
 
@@ -212,6 +213,15 @@ public class MainActivity extends AppCompatActivity {
           ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
           toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
         }
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 
     public static String getGuidFromByteArray(byte[] bytes) {
