@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         manufacturerData.put(19, (byte) 0x09); //SECOND BYTE Major
         manufacturerData.put(20, (byte) 0x00); //FIRST BYTE Minor
         manufacturerData.put(21, (byte) 0x06); //SECOND BYTE Minor
-        manufacturerData.put(22, (byte) 0xB5); //Reference TX Power
+        manufacturerData.put(22, (byte) 0x46); //Reference TX Power
         mBuilder.addManufacturerData(224, manufacturerData.array()); //Using Google ID
         advertiseData = mBuilder.build();
     }
