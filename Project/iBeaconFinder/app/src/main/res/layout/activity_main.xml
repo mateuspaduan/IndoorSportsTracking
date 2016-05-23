@@ -29,7 +29,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:id="@+id/frameLayout">
 
-        <android.support.v7.widget.RecyclerView
+        <ListView
             android:id="@+id/cardList"
             android:layout_width= "wrap_content"
             android:layout_height= "wrap_content"

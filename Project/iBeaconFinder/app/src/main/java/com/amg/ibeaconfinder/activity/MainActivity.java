@@ -24,9 +24,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
+import com.amg.ibeaconfinder.adapter.BeaconListAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
 
 import java.nio.ByteBuffer;
@@ -51,10 +53,10 @@ public class MainActivity extends AppCompatActivity {
     BluetoothLeScanner btLeScanner;
 
     ScanCallback scanCallback;
-    BeaconAdapter beaconAdapter;
+    BeaconListAdapter beaconAdapter;
 
     ArrayList<Beacon> beaconList;
-    RecyclerView recyclerView;
+    ListView listView;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -86,13 +88,10 @@ public class MainActivity extends AppCompatActivity {
 
         // BEACON LIST;
         beaconList = new ArrayList<>();
-        recyclerView = (RecyclerView) findViewById(R.id.cardList);
-        recyclerView.setHasFixedSize(true);
-        LinearLayoutManager llm = new LinearLayoutManager(this);
-        llm.setOrientation(LinearLayoutManager.VERTICAL);
-        recyclerView.setLayoutManager(llm);
-        beaconAdapter = new BeaconAdapter(beaconList);
-        recyclerView.setAdapter(beaconAdapter);
+
+        listView = (ListView) findViewById(R.id.cardList);
+        beaconAdapter = new BeaconListAdapter(beaconList, this);
+        listView.setAdapter(beaconAdapter);
 
         // SEARCH BUTTON
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -102,8 +101,8 @@ public class MainActivity extends AppCompatActivity {
         scanHandler = new Handler();
 
         // SCAN CALLBACK AND SCANNER
-        setScanCallback();
         createScanner();
+        setScanCallback();
     }
 
     void createScanner(){
@@ -111,16 +110,18 @@ public class MainActivity extends AppCompatActivity {
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         checkBluetoothState();
-        btLeScanner = btAdapter.getBluetoothLeScanner();
     }
 
     private void checkBluetoothState(){
         if (btAdapter == null)
             Snackbar.make(findViewById(R.id.coordinatorLayout), "Seu dispositivo não suporta Bluetooth!", Snackbar.LENGTH_LONG).show();
-        else if (!btAdapter.isEnabled() || btAdapter == null){
+        else if (!btAdapter.isEnabled()){
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
         }
+
+        if(btAdapter.isEnabled()) btLeScanner = btAdapter.getBluetoothLeScanner();
+        else checkBluetoothState();
     }
 
     View.OnClickListener fabClick = new View.OnClickListener(){
@@ -155,40 +156,44 @@ public class MainActivity extends AppCompatActivity {
                    return;
                }
                else{
-                   byte[] manufacturerData = scanRecord.getBytes(); //GETTING BEACON PDU
-                   byte[] uuidBytes = new byte[16]; // UUID ARRAY
-                   System.arraycopy(manufacturerData, 6, uuidBytes, 0, 16); // COPYING UUID BYTES
-                   String uuid = getGuidFromByteArray(uuidBytes);
-                   int major = twoBytesToShort(manufacturerData[22], manufacturerData[23]);
-                   int minor = twoBytesToShort(manufacturerData[24], manufacturerData[25]);
-                   int txPower = manufacturerData[26]&0xff;
-                   double rssi = result.getRssi();
+                   byte[] beaconData = scanRecord.getBytes(); //GETTING BEACON PDU
+                   String iBeaconFirstByte = Integer.toHexString(beaconData[4] & 0xFF); // iBeacon First Byte
+                   String iBeaconSecondByte = Integer.toHexString(beaconData[5] & 0xFF); // iBeacon Second Byte
 
-                   Beacon beacon = new Beacon();
-                   double distance = beacon.calculateAccuracy(txPower, rssi);
-                   beacon.setUuid(uuid);
-                   beacon.setMajor(Integer.toString(major));
-                   beacon.setMinor(Integer.toString(minor));
-                   beacon.setRssi(Integer.toString(result.getRssi()));
-                   beacon.setDistance(String.valueOf(round(distance, 4))+ "m");
+                   if(iBeaconFirstByte.equals("2") && iBeaconSecondByte.equals("15")){
+                       byte[] uuidBytes = new byte[16]; // UUID ARRAY
+                       System.arraycopy(beaconData, 6, uuidBytes, 0, 16); // COPYING UUID BYTES
+                       String uuid = getGuidFromByteArray(uuidBytes);
 
-                   boolean found = false;
-                   for(int i=0; i<beaconList.size(); i++){
-                       if(beaconList.get(i).getUuid().equals(uuid)){
-                           beaconList.add(i, beacon);
-                           beaconAdapter.notifyItemRemoved(i);
-                           found = true;
-                           break;
+                       int major = twoBytesToShort(beaconData[22], beaconData[23]);
+                       int minor = twoBytesToShort(beaconData[24], beaconData[25]);
+                       int txPower = beaconData[26]&0xff;
+                       double rssi = result.getRssi();
+
+                       Beacon beacon = new Beacon();
+                       double distance = beacon.calculateAccuracy(txPower, rssi);
+                       String mac = result.getDevice().getAddress();
+                       beacon.setUuid(uuid);
+                       beacon.setMajor(Integer.toString(major));
+                       beacon.setMinor(Integer.toString(minor));
+                       beacon.setRssi(Integer.toString(result.getRssi()));
+                       beacon.setMacAddress(mac);
+                       beacon.setDistance(String.valueOf(round(distance, 4))+ "m");
+
+                       boolean found = false;
+                       for(int i=0; i<beaconList.size(); i++){
+                           if(beaconList.get(i).getMacAddress().equals(mac)){
+                               beaconList.remove(i);
+                               beaconList.add(i, beacon);
+                               beaconAdapter.notifyDataSetChanged();
+                               found = true;
+                               break;
+                           }
                        }
+
+                       if(!found) beaconList.add(beacon);
+                       beaconAdapter.notifyDataSetChanged();
                    }
-
-                   if(!found) beaconList.add(beacon);
-                   beaconAdapter.notifyDataSetChanged();
-
-                   /*if(distance < 1) beaconNotification(2);
-                   else if(distance < 3) beaconNotification(5);
-                   else beaconNotification(9);*/
-
                }
            }
 

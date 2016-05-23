@@ -9,6 +9,11 @@ public class Beacon {
     private String major;
     private String rssi;
     private String distance;
+    private String macAddress;
+
+    public String getMacAddress() { return macAddress;  }
+
+    public void setMacAddress(String macAddress) { this.macAddress = macAddress; }
 
     public String getUuid() {
         return uuid;

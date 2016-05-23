@@ -56,6 +56,7 @@ public class BeaconListAdapter extends BaseAdapter{
             viewHolder.major = (TextView) view.findViewById(R.id.major);
             viewHolder.rssi = (TextView) view.findViewById(R.id.rssi);
             viewHolder.distance = (TextView) view.findViewById(R.id.distance);
+            viewHolder.mac = (TextView) view.findViewById(R.id.mac);
 
             view.setTag(viewHolder);
         }
@@ -69,6 +70,7 @@ public class BeaconListAdapter extends BaseAdapter{
         viewHolder.major.setText("Major: " + beacon.getMajor());
         viewHolder.rssi.setText("RRSI: " + beacon.getRssi());
         viewHolder.distance.setText("Distance: " + beacon.getDistance());
+        viewHolder.mac.setText("MAC Address: " + beacon.getMacAddress());
 
         return view;
     }
@@ -79,5 +81,6 @@ public class BeaconListAdapter extends BaseAdapter{
         protected TextView major;
         protected TextView rssi;
         protected TextView distance;
+        protected TextView mac;
     }
 }

@@ -1,26 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.CardView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/card_view"
+    android:id="@+id/beacon_view"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    card_view:cardCornerRadius="4dp"
-    android:layout_margin="6dp">
+    android:layout_margin="6dp"
+    android:padding="4dp">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="10dp"
-        android:background="@color/background_floating_material_light"
-        android:padding="10dp">
         <TextView
             android:id="@+id/uuid"
             android:layout_width="match_parent"
             android:layout_height="20dp"
             android:text="uuid"
             android:gravity="center_vertical"
-            android:textSize="14dp"/>
+            android:layout_marginLeft="5dp"
+            android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/mac"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:text="mac"
+        android:layout_below="@id/uuid"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="10dp"
+        android:textSize="14sp"/>
 
         <TextView
             android:id="@+id/minor"
@@ -28,8 +33,8 @@
             android:layout_height="wrap_content"
             android:text="Minor"
             android:gravity="center_vertical"
-            android:textSize="10dp"
-            android:layout_below="@id/uuid"
+            android:textSize="14sp"
+            android:layout_below="@id/mac"
             android:layout_marginTop="10dp"
             android:layout_marginLeft="5dp"/>
 
@@ -39,7 +44,7 @@
             android:layout_height="wrap_content"
             android:text="Major"
             android:gravity="center_vertical"
-            android:textSize="10dp"
+            android:textSize="14sp"
             android:layout_below="@id/minor"
             android:layout_marginTop="10dp"
             android:layout_marginLeft="5dp"/>
@@ -49,10 +54,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="RSSI"
-            android:textSize="10dp"
+            android:textSize="14sp"
             android:layout_marginTop="10dp"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="150dp"
+            android:layout_toRightOf="@+id/minor"
+            android:layout_marginLeft="100dp"
             android:layout_alignBaseline="@id/minor"/>
 
         <TextView
@@ -60,11 +65,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Distance"
-            android:textSize="10dp"
+            android:textSize="14sp"
             android:layout_marginTop="10dp"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="150dp"
-            android:layout_alignBaseline="@id/major"/>
+            android:layout_marginLeft="100dp"
+            android:layout_alignBaseline="@id/major"
+            android:layout_toRightOf="@+id/major"/>
 
-    </RelativeLayout>
-</android.support.v7.widget.CardView>
+</RelativeLayout>
