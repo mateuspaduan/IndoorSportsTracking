@@ -1,5 +1,6 @@
 package com.amg.ibeaconfinder.activity;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -32,12 +33,11 @@ import com.amg.ibeaconfinder.adapter.BeaconListAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
 
 import java.nio.ByteBuffer;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
+import java.lang.Math;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 1;
@@ -138,6 +138,15 @@ public class MainActivity extends AppCompatActivity {
                         isScanning = false;
                         btLeScanner.stopScan(scanCallback);
                         Log.i(TAG, "stopping scan");
+
+                        Beacon beacon1 = beaconList.get(0);
+                        Beacon beacon2 = beaconList.get(1);
+                        double l1 = beacon1.getRealDistance();
+                        double l2 = beacon2.getRealDistance();
+                        double y = yComponent(l1,l2,10);
+                        double x = xComponent(l1,y);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+                        builder.setTitle("Jogador").setMessage("X = " + x + "Y = " + y).create().show();
                     }
                 }, SCAN_INTERVAL_MS);
             }
@@ -178,7 +187,8 @@ public class MainActivity extends AppCompatActivity {
                        beacon.setMinor(Integer.toString(minor));
                        beacon.setRssi(Integer.toString(result.getRssi()));
                        beacon.setMacAddress(mac);
-                       beacon.setDistance(String.valueOf(round(distance, 4))+ "m");
+                       beacon.setDistance(String.valueOf(round(distance, 4)) + "m");
+                       beacon.setRealDistance(distance);
 
                        boolean found = false;
                        for(int i=0; i<beaconList.size(); i++){
@@ -204,20 +214,16 @@ public class MainActivity extends AppCompatActivity {
        };
    }
 
-    public void beaconNotification(int seconds) {
+    public double yComponent(double l1, double l2, double base){
+        double s = (base+l1+l2)/2;
+        return (Math.sqrt(s*(s-l1)*(s-l2)*(s-base))*2)/base;
+    } //l1 = rx1, distancia do beacon ate a base 0,0
+      //l2 = rx2, distancia do beacon ate a base 10,0
+      //base = distancia entre as bases
 
-        timer.schedule(new NotificationTask(), 0, seconds);
-    }
-
-    class NotificationTask extends TimerTask {
-
-        public void run() {
-
-            ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
-            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
-            //timer.cancel();
-        }
-    }
+    public double xComponent(double l1, double l2){
+        return Math.sqrt(Math.pow(l1, 2) - Math.pow(l2, 2));
+    } //l1 = hipotenusa (Rx1) e l2 = componente y do ponto (altura)
 
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();

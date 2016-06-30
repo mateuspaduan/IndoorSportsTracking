@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(fabClick);
 
         // INSTANCIANDO BLUETOOTH ADAPTER E ADVERTISER
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        //bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
 
         // INSTANCIANDO TEXTVIEWS
@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         beaconId = (TextView) findViewById(R.id.beaconId);
 
         // CONFIGURANDO EMISOR
-        checkBluetoothState();
+        //checkBluetoothState();
         setAdvertiseData();
         setAdvertiseSettings();
         setAdvertiseCallback();
