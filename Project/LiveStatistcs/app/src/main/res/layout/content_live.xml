@@ -5,13 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.amg.livestatistcs.MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:context=".activity.MainActivity"
+    tools:showIn="@layout/activity_live">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin"
-        android:text="@string/large_text" />
+    <ListView
+        android:id="@+id/live_list"
+        android:layout_width= "wrap_content"
+        android:layout_height= "wrap_content"
+        android:scrollbars="vertical"
+        android:layout_margin="10dp"/>
 
 </android.support.v4.widget.NestedScrollView>
