@@ -14,6 +14,7 @@ import java.util.List;
 /**
  * Created by Mateus on 7/14/2016.
  */
+
 public class PlayerDAO {
 
     private SQLiteDatabase database;
