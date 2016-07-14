@@ -24,6 +24,8 @@ public class Player {
         this.mac = mac;
     }
 
+
+
     public String getMac() {
         return mac;
     }
