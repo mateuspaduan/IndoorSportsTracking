@@ -13,22 +13,38 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
 
 import com.amg.livestatistcs.R;
+import com.amg.livestatistcs.adapter.LiveListAdapter;
+import com.amg.livestatistcs.model.Player;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener {
     private AppBarLayout appBarLayout;
     private Bitmap bg;
+    private ArrayList<Player> liveArrayList;
+    private LiveListAdapter listAdapter;
+    private ListView liveView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_live);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setLogo(R.mipmap.ic_launcher);
         setSupportActionBar(toolbar);
 
+        //AppBarLayout settings
         appBarLayout = (AppBarLayout) findViewById(R.id.app_bar);
         appBarLayout.addOnOffsetChangedListener(this);
+
+        //ListView settings
+        liveArrayList = new ArrayList<>();
+        liveView = (ListView) findViewById(R.id.live_list);
+        listAdapter = new LiveListAdapter(liveArrayList, this);
+        liveView.setAdapter(listAdapter);
 
         creatingCourtBitmap();
         setToolbarMap();
