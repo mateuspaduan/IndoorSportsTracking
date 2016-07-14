@@ -4,7 +4,11 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class Base extends SQLiteOpenHelper{
+/**
+ * Created by Mateus on 7/14/2016.
+ */
+
+public class Base extends SQLiteOpenHelper {
 
     //nome do banco
     public static final String DB_NAME = "ISTdb";
