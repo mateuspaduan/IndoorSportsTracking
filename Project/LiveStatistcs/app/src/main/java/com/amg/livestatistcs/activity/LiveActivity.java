@@ -21,7 +21,7 @@ import com.amg.livestatistcs.model.Player;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener {
+public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener {
     private AppBarLayout appBarLayout;
     private Bitmap bg;
     private ArrayList<Player> liveArrayList;
@@ -100,3 +100,12 @@ public class MainActivity extends AppCompatActivity implements AppBarLayout.OnOf
         }
     }
 }
+
+/*  Beacon beacon1 = beaconList.get(0);
+    Beacon beacon2 = beaconList.get(1);
+    double l1 = beacon1.getRealDistance();
+    double l2 = beacon2.getRealDistance();
+    double y = yComponent(l1,l2,10);
+    double x = xComponent(l1,y);
+    AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+    builder.setTitle("Jogador").setMessage("X = " + x + "Y = " + y).create().show();*/
