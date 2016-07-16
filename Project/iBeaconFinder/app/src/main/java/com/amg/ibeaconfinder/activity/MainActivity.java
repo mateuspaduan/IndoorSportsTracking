@@ -13,6 +13,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconListAdapter;
@@ -58,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     BroadcastReceiver mReceiver;
+    WifiP2pDevice device;
 
     IntentFilter mFilter;
 
@@ -119,13 +123,24 @@ public class MainActivity extends AppCompatActivity {
         setScanCallback();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        mReceiver = new WiFiP2pBReceiver(mManager, mChannel, this);
+        registerReceiver(mReceiver, mFilter);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
+    }
+
     void createScanner(){
         // BLUETOOTH
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         checkBluetoothState();
-
-        registerReceiver(mReceiver, mFilter);
     }
 
     private void checkBluetoothState(){
@@ -139,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
         if(btAdapter.isEnabled()) btLeScanner = btAdapter.getBluetoothLeScanner();
         else checkBluetoothState();
     }
+
 
     View.OnClickListener fabClick = new View.OnClickListener(){
         @Override
@@ -166,9 +182,36 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }, SCAN_INTERVAL_MS);
             }
+
+            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(MainActivity.this, "Started discovering", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(int reason) {
+
+                }
+            });
         }
     };
 
+    public void connect(WifiP2pConfig config){
+
+        mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Toast.makeText(MainActivity.this, "Connect failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
    private void setScanCallback() {
        scanCallback = new ScanCallback() {

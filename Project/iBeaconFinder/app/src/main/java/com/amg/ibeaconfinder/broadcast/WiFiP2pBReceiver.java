@@ -31,6 +31,7 @@ public class WiFiP2pBReceiver extends BroadcastReceiver{
     public void onReceive(Context context, Intent intent) {
 
         String action = intent.getAction();
+        WifiP2pManager.PeerListListener mPeerListener = null;
 
         if(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)){
             int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
@@ -39,6 +40,8 @@ public class WiFiP2pBReceiver extends BroadcastReceiver{
             else Toast.makeText(context, "WiFiP2p is not supported", Toast.LENGTH_SHORT).show();
         }
 
-
+        if(mManager != null){
+            mManager.requestPeers(mChannel, mPeerListener);
+        }
     }
 }
