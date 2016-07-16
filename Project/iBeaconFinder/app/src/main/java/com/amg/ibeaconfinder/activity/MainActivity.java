@@ -9,17 +9,17 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
-import android.media.ToneGenerator;
+import android.content.IntentFilter;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -28,14 +28,13 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.amg.ibeaconfinder.R;
-import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.adapter.BeaconListAdapter;
+import com.amg.ibeaconfinder.broadcast.WiFiP2pBReceiver;
 import com.amg.ibeaconfinder.model.Beacon;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 import java.util.UUID;
 import java.lang.Math;
 
@@ -46,8 +45,6 @@ public class MainActivity extends AppCompatActivity {
     boolean isScanning = false;
     private Handler scanHandler;
 
-    Timer timer = new Timer();
-
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
     BluetoothLeScanner btLeScanner;
@@ -57,6 +54,12 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Beacon> beaconList;
     ListView listView;
+
+    WifiP2pManager mManager;
+    WifiP2pManager.Channel mChannel;
+    BroadcastReceiver mReceiver;
+
+    IntentFilter mFilter;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -79,6 +82,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // WiFi p2p instances
+        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+        mChannel = mManager.initialize(this, getMainLooper(), null);
+        mReceiver = new WiFiP2pBReceiver(mManager, mChannel, this);
+
+        mFilter = new IntentFilter();
+        mFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        mFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        mFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        mFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         // TOOLBAR
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -110,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         checkBluetoothState();
+
+        registerReceiver(mReceiver, mFilter);
     }
 
     private void checkBluetoothState(){
