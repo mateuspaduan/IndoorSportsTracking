@@ -170,15 +170,6 @@ public class MainActivity extends AppCompatActivity {
                         isScanning = false;
                         btLeScanner.stopScan(scanCallback);
                         Log.i(TAG, "stopping scan");
-
-                        Beacon beacon1 = beaconList.get(0);
-                        Beacon beacon2 = beaconList.get(1);
-                        double l1 = beacon1.getRealDistance();
-                        double l2 = beacon2.getRealDistance();
-                        double y = yComponent(l1,l2,10);
-                        double x = xComponent(l1,y);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-                        builder.setTitle("Jogador").setMessage("X = " + x + "Y = " + y).create().show();
                     }
                 }, SCAN_INTERVAL_MS);
             }
@@ -272,18 +263,7 @@ public class MainActivity extends AppCompatActivity {
            }
        };
    }
-
-    public double yComponent(double l1, double l2, double base){
-        double s = (base+l1+l2)/2;
-        return (Math.sqrt(s*(s-l1)*(s-l2)*(s-base))*2)/base;
-    } //l1 = rx1, distancia do beacon ate a base 0,0
-      //l2 = rx2, distancia do beacon ate a base 10,0
-      //base = distancia entre as bases
-
-    public double xComponent(double l1, double l2){
-        return Math.sqrt(Math.pow(l1, 2) - Math.pow(l2, 2));
-    } //l1 = hipotenusa (Rx1) e l2 = componente y do ponto (altura)
-
+   
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
 
