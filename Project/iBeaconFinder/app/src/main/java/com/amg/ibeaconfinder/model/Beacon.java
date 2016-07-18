@@ -9,7 +9,6 @@ public class Beacon {
     private String major;
     private String rssi;
     private String distance;
-    private double realDistance;
     private String macAddress;
 
     public String getMacAddress() { return macAddress;  }
@@ -55,10 +54,6 @@ public class Beacon {
     public void setMinor(String minor) {
         this.minor = minor;
     }
-
-    public double getRealDistance() { return realDistance; }
-
-    public void setRealDistance(double realDistance) { this.realDistance = realDistance; }
 
     public double calculateAccuracy(int txPower, double rssi) {
 

@@ -1,6 +1,5 @@
 package com.amg.ibeaconfinder.activity;
 
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -9,37 +8,36 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pManager;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.amg.ibeaconfinder.R;
+import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.adapter.BeaconListAdapter;
-import com.amg.ibeaconfinder.broadcast.WiFiP2pBReceiver;
 import com.amg.ibeaconfinder.model.Beacon;
 
 import java.nio.ByteBuffer;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
-import java.lang.Math;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 1;
@@ -47,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int SCAN_INTERVAL_MS = 10000;
     boolean isScanning = false;
     private Handler scanHandler;
+
+    Timer timer = new Timer();
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
@@ -57,13 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Beacon> beaconList;
     ListView listView;
-
-    WifiP2pManager mManager;
-    WifiP2pManager.Channel mChannel;
-    BroadcastReceiver mReceiver;
-    WifiP2pDevice device;
-
-    IntentFilter mFilter;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -86,17 +79,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // WiFi p2p instances
-        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        mChannel = mManager.initialize(this, getMainLooper(), null);
-        mReceiver = new WiFiP2pBReceiver(mManager, mChannel, this);
-
-        mFilter = new IntentFilter();
-        mFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        mFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        mFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        mFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         // TOOLBAR
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -123,19 +105,6 @@ public class MainActivity extends AppCompatActivity {
         setScanCallback();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mReceiver = new WiFiP2pBReceiver(mManager, mChannel, this);
-        registerReceiver(mReceiver, mFilter);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        unregisterReceiver(mReceiver);
-    }
-
     void createScanner(){
         // BLUETOOTH
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -155,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
         else checkBluetoothState();
     }
 
-
     View.OnClickListener fabClick = new View.OnClickListener(){
         @Override
         public void onClick(View v) {
@@ -173,36 +141,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }, SCAN_INTERVAL_MS);
             }
-
-            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(MainActivity.this, "Started discovering", Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onFailure(int reason) {
-
-                }
-            });
         }
     };
 
-    public void connect(WifiP2pConfig config){
-
-        mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Toast.makeText(MainActivity.this, "Connect failed.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
    private void setScanCallback() {
        scanCallback = new ScanCallback() {
@@ -237,8 +178,7 @@ public class MainActivity extends AppCompatActivity {
                        beacon.setMinor(Integer.toString(minor));
                        beacon.setRssi(Integer.toString(result.getRssi()));
                        beacon.setMacAddress(mac);
-                       beacon.setDistance(String.valueOf(round(distance, 4)) + "m");
-                       beacon.setRealDistance(distance);
+                       beacon.setDistance(String.valueOf(round(distance, 4))+ "m");
 
                        boolean found = false;
                        for(int i=0; i<beaconList.size(); i++){
@@ -263,7 +203,22 @@ public class MainActivity extends AppCompatActivity {
            }
        };
    }
-   
+
+    public void beaconNotification(int seconds) {
+
+        timer.schedule(new NotificationTask(), 0, seconds);
+    }
+
+    class NotificationTask extends TimerTask {
+
+        public void run() {
+
+            ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
+            //timer.cancel();
+        }
+    }
+
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
 
