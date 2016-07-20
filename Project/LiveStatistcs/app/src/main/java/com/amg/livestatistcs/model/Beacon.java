@@ -40,9 +40,7 @@ public class Beacon {
         this.pos_y = pos_y;
     }
 
-    public double getTotal() {
-        return total;
-    }
+    public double getTotal() { return total; }
 
     public void setTotal(double total) {
         this.total = total;

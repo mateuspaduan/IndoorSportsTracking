@@ -13,7 +13,19 @@ public class Player {
     private double avgrun; //Media corrido
     private double timegame; //Tempo total jogado
 
-    public Player(double timegame, double avgrun, double totalrun, String number, int games, int colorpos, String name, String mac) {
+    public Player(double avgrun, double totalrun, String number, int colorpos, String name, String mac) {
+        this.timegame = timegame;
+        this.avgrun = avgrun;
+        this.totalrun = totalrun;
+        this.number = number;
+        this.games = games;
+        this.colorpos = colorpos;
+        this.name = name;
+        this.mac = mac;
+    }
+
+    public Player(double timegame, double avgrun, double totalrun, String number, int games,
+                  int colorpos, String name, String mac) {
         this.timegame = timegame;
         this.avgrun = avgrun;
         this.totalrun = totalrun;
