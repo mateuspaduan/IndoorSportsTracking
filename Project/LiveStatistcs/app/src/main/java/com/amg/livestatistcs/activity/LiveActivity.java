@@ -218,7 +218,7 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
                 Log.i("txtBeacons", "textFinder2: "+lineFinder2+" : end");
 
                 boolean result = convertTxtToBeacon(lineFinder1, lineFinder2);
-                
+
                 String oldLineFinder1 = lineFinder1;
                 String oldLineFinder2 = lineFinder2;
                 lineFinder1 = brFinder1.readLine();
