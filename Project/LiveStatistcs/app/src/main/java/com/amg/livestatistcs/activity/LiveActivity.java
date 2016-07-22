@@ -9,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -29,6 +30,11 @@ import com.amg.livestatistcs.provider.MatchManagement;
 import com.amg.livestatistcs.provider.PlayerManagement;
 import com.amg.livestatistcs.provider.SettingsManagement;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
@@ -36,6 +42,7 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
     private AppBarLayout appBarLayout;
     private Bitmap bg;
     private ArrayList<Player> liveArrayList;
+    private ArrayList<Beacon> liveBeaconList;
     private LiveListAdapter listAdapter;
     private ListView liveView;
     private Handler handler;
@@ -46,6 +53,8 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
     private boolean startgame = true;
     private double courtX;
     private double courtY;
+    private double distanceX;
+    private double distanceY;
     private int time = 0;
     private final int INTERVAL = 500; //500ms
     private final int COLORS[] = {R.drawable.brown_400, R.drawable.dpurple_300, R.drawable.gray_500,
@@ -69,6 +78,7 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
         creatingCourtBitmap();
 
         //ListView settings
+        liveBeaconList = new ArrayList<>();
         liveArrayList = new ArrayList<>();
         liveView = (ListView) findViewById(R.id.live_list);
         listAdapter = new LiveListAdapter(liveArrayList, this);
@@ -79,6 +89,9 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
         float values[] = settingsManagement.retrieveDimensions();
         courtX = values[0];
         courtY = values[1];
+        values = settingsManagement.retrieveDistanceFromCourt();
+        distanceX = values[0];
+        distanceY = values[1];
 
         //Retrieving Players Settings
         playerManagement = new PlayerManagement(this);
@@ -177,24 +190,95 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
     //WIFI AND SHAREDPREFS PART
     ArrayList<Beacon> returnBeaconsFromWifi(){
         ArrayList<Beacon> beaconArrayList = new ArrayList<>();
+        String[] txtBeacons = new String[2];
+        try {
+            readTxtBeacons();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         //METHOD
         return beaconArrayList;
     }
 
-    void calculatePosition(){
+    private void readTxtBeacons() throws IOException {
+        BufferedReader brFinder1 = null, brFinder2 = null;
+        try {
+            File sdcard = Environment.getExternalStorageDirectory();
+            String lineFinder1, lineFinder2;
 
+            File file1 = new File(sdcard,"finder1.txt");
+            File file2 = new File(sdcard,"finder2.txt");
+            brFinder1 = new BufferedReader(new FileReader(file1));
+            brFinder2 = new BufferedReader(new FileReader(file2));
+
+            lineFinder1 = brFinder1.readLine();
+            lineFinder2 = brFinder2.readLine();
+            while (lineFinder1 != null || lineFinder2 != null) {
+                Log.i("txtBeacons", "textFinder1: "+lineFinder1+" : end");
+                Log.i("txtBeacons", "textFinder2: "+lineFinder2+" : end");
+
+                boolean result = convertTxtToBeacon(lineFinder1, lineFinder2);
+                
+                String oldLineFinder1 = lineFinder1;
+                String oldLineFinder2 = lineFinder2;
+                lineFinder1 = brFinder1.readLine();
+                lineFinder2 = brFinder2.readLine();
+
+                if(!result){
+                    result = convertTxtToBeacon(oldLineFinder1, lineFinder2);
+                    if(!result) {
+                        result = convertTxtToBeacon(lineFinder1, oldLineFinder2);
+                        if(!result) result = convertTxtToBeacon(lineFinder1, lineFinder2);
+                    }
+                }
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            brFinder1.close();
+            brFinder2.close();
+        }
     }
 
-    public double yComponent(double l1, double l2, double base, double offset){
-        double s = (base+l1+l2)/2;
-        return ((Math.sqrt(s*(s-l1)*(s-l2)*(s-base))*2)/base) - offset;
+    private boolean convertTxtToBeacon(String finder1, String finder2){
+        String[] linesFinder1 = finder1.split(System.getProperty(","));
+        String[] linesFinder2 = finder2.split(System.getProperty(","));
+        double[] values;
+
+        //int pos1 = Integer.parseInt(linesFinder1[0]);
+        //int pos2 = Integer.parseInt(linesFinder2[0]);
+        //if(pos1 == pos2)
+
+        if(linesFinder1[1].equals(linesFinder2[1])){
+            values = calculatePosition(linesFinder1[2], linesFinder2[2]);
+            liveBeaconList.add(new Beacon(linesFinder1[1], values[0], values[1]));
+            return true;
+        }
+        else return false;
+    }
+
+    double[] calculatePosition(String finder1, String finder2){
+        int distance1 = Integer.parseInt(finder1);
+        int distance2 = Integer.parseInt(finder2);
+        double y = yComponent(distance1, distance2);
+        double x = xComponent(distance1, y);
+        double[] values = new double[2];
+        values[0] = x;
+        values[1] = y;
+        return values;
+    }
+
+    public double yComponent(double l1, double l2){ //Altura do triangulo
+        double s = (courtX+l1+l2)/2;
+        return ((Math.sqrt(s*(s-l1)*(s-l2)*(s-courtX))*2)/courtX) - distanceY;
     }
     //l1 = rx1, distancia do beacon ate a base 0,0
     //l2 = rx2, distancia do beacon ate a base 10,0
-    //base = distancia entre as bases
 
-    public double xComponent(double l1, double l2, double offset){
-        return Math.sqrt(Math.pow(l1, 2) - Math.pow(l2, 2)) - offset;
+    public double xComponent(double l1, double l2){
+        return Math.sqrt(Math.pow(l1, 2) - Math.pow(l2, 2)) - distanceX;
     } //l1 = hipotenusa (Rx1) e l2 = componente y do ponto (altura)
 
     //-------------------------------------------------------------------------------------------//

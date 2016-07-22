@@ -34,6 +34,14 @@ public class SettingsActivity extends AppCompatActivity {
         YSize = (EditText) findViewById(R.id.sizey_et);
         SettingsListView = (ListView) findViewById(R.id.settings_list);
 
+        sManagement = new SettingsManagement(getApplicationContext());
+        float values[] = sManagement.retrieveDimensions();
+        XSize.setHint("Tamanho atual: " + Float.toString(values[0]));
+        YSize.setHint("Tamanho atual: " + Float.toString(values[1]));
+        values = sManagement.retrieveDistanceFromCourt();
+        XComponent.setHint("Distância atual: " + Float.toString(values[0]));
+        YComponent.setHint("Distância atual: " + Float.toString(values[1]));
+
         View header = getLayoutInflater().inflate(R.layout.content_settings, null);
 
         settingsListAdapter = new SettingsListAdapter(populateList(), this);
@@ -63,7 +71,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         if(view_xoffset.length() > 0 && view_yoffset.length() > 0 &&
                 view_xsize.length() > 0 && view_ysize.length() > 0){
-            sManagement = new SettingsManagement(getApplicationContext());
             sManagement.saveSettings(Float.parseFloat(view_xoffset.getText().toString()),
                     Float.parseFloat(view_yoffset.getText().toString()),
                     Float.parseFloat(view_xsize.getText().toString()),
