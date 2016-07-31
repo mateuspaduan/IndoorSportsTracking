@@ -21,7 +21,7 @@
 
     <EditText
         android:layout_toEndOf="@id/x_tv"
-        android:layout_width="150dp"
+        android:layout_width="match_parent"
         android:layout_height="46dp"
         android:id="@+id/x_et"
         android:layout_marginLeft="10dp"
@@ -29,7 +29,7 @@
         android:inputType="numberDecimal"/>
 
     <EditText
-        android:layout_width="150dp"
+        android:layout_width="match_parent"
         android:layout_height="46dp"
         android:id="@+id/y_et"
         android:layout_toEndOf="@id/y_tv"
@@ -61,7 +61,7 @@
     <EditText
         android:layout_toEndOf="@id/sizex_tv"
         android:layout_below="@+id/y_et"
-        android:layout_width="150dp"
+        android:layout_width="match_parent"
         android:layout_height="46dp"
         android:id="@+id/sizex_et"
         android:textSize="18sp"
@@ -70,7 +70,7 @@
         android:inputType="numberDecimal"/>
 
     <EditText
-        android:layout_width="150dp"
+        android:layout_width="match_parent"
         android:layout_height="46dp"
         android:id="@+id/sizey_et"
         android:textSize="18sp"

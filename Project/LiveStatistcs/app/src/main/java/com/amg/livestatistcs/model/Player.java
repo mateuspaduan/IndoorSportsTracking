@@ -24,6 +24,13 @@ public class Player {
         this.mac = mac;
     }
 
+    public Player(String name, int colorpos, String number, String mac) {
+        this.number = number;
+        this.colorpos = colorpos;
+        this.name = name;
+        this.mac = mac;
+    }
+
     public Player(double timegame, double avgrun, double totalrun, String number, int games,
                   int colorpos, String name, String mac) {
         this.timegame = timegame;

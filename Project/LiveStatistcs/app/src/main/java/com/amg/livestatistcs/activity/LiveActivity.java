@@ -76,6 +76,7 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
         appBarLayout = (AppBarLayout) findViewById(R.id.app_bar);
         appBarLayout.addOnOffsetChangedListener(this);
         creatingCourtBitmap();
+        setToolbarMap();
 
         //ListView settings
         liveBeaconList = new ArrayList<>();
@@ -137,7 +138,6 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
     }
 
     private class updateStatusAsync extends AsyncTask<Void, Void, Integer> {
-        ArrayList<Beacon> beaconArrayList;
         Canvas canvas;
         double width;
         double height;
@@ -151,8 +151,12 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
         @Override
         protected Integer doInBackground(Void... params) {
             canvas = new Canvas(bg);
-            beaconArrayList = returnBeaconsFromWifi();
-            for(Beacon beacon : beaconArrayList){
+            try {
+                readTxtBeacons();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            for(Beacon beacon : liveBeaconList){
                 String mac = beacon.getMac();
                 String values[] = playerManagement.retrievePlayerSettings(mac);
                 liveArrayList.add(new Player(beacon.getAvg(), beacon.getTotal(), values[2],
@@ -167,7 +171,7 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
 
         @Override
         protected void onPostExecute(Integer result){
-            matchManagement.createMatchSession(beaconArrayList, time);
+            matchManagement.createMatchSession(liveBeaconList, time);
             listAdapter.notifyDataSetChanged();
             setToolbarMap();
         }
@@ -188,18 +192,6 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
 
     //-------------------------------------------------------------------------------------------//
     //WIFI AND SHAREDPREFS PART
-    ArrayList<Beacon> returnBeaconsFromWifi(){
-        ArrayList<Beacon> beaconArrayList = new ArrayList<>();
-        String[] txtBeacons = new String[2];
-        try {
-            readTxtBeacons();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //METHOD
-        return beaconArrayList;
-    }
-
     private void readTxtBeacons() throws IOException {
         BufferedReader brFinder1 = null, brFinder2 = null;
         try {
@@ -237,8 +229,8 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
             e.printStackTrace();
         }
         finally {
-            brFinder1.close();
-            brFinder2.close();
+            if(brFinder1 != null) brFinder1.close();
+            if(brFinder2 != null) brFinder2.close();
         }
     }
 

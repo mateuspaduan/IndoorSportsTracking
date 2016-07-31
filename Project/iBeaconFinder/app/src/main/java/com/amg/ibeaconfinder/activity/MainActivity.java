@@ -24,6 +24,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
@@ -44,17 +45,14 @@ public class MainActivity extends AppCompatActivity {
     boolean isScanning = false;
     private Handler scanHandler;
 
-    Timer timer = new Timer();
+    private BluetoothAdapter btAdapter;
+    private BluetoothLeScanner btLeScanner;
 
-    BluetoothManager btManager;
-    BluetoothAdapter btAdapter;
-    BluetoothLeScanner btLeScanner;
+    private ScanCallback scanCallback;
+    private BeaconAdapter beaconAdapter;
 
-    ScanCallback scanCallback;
-    BeaconAdapter beaconAdapter;
-
-    ArrayList<Beacon> beaconList;
-    RecyclerView recyclerView;
+    private ArrayList<Beacon> beaconList;
+    private RecyclerView recyclerView;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -103,27 +101,18 @@ public class MainActivity extends AppCompatActivity {
 
         // SCAN CALLBACK AND SCANNER
         setScanCallback();
-        createScanner();
-    }
 
-    void createScanner(){
-        // BLUETOOTH
-        btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        btAdapter = btManager.getAdapter();
-        checkBluetoothState();
-    }
-
-    private void checkBluetoothState(){
+        btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
-            Snackbar.make(findViewById(R.id.coordinatorLayout), "Seu dispositivo não suporta Bluetooth!", Snackbar.LENGTH_LONG).show();
+            Toast.makeText(this, "Seu dispositivo não suporta Bluetooth!", Toast.LENGTH_LONG);
         else if (!btAdapter.isEnabled()){
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
+            if(btAdapter.isEnabled())
+                btLeScanner = btAdapter.getBluetoothLeScanner();
         }
-
-        if(btAdapter.isEnabled()) btLeScanner = btAdapter.getBluetoothLeScanner();
-        else checkBluetoothState();
     }
+
 
     View.OnClickListener fabClick = new View.OnClickListener(){
         @Override
@@ -200,21 +189,6 @@ public class MainActivity extends AppCompatActivity {
            }
        };
    }
-
-    public void beaconNotification(int seconds) {
-
-        timer.schedule(new NotificationTask(), 0, seconds);
-    }
-
-    class NotificationTask extends TimerTask {
-
-        public void run() {
-
-            ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, ToneGenerator.MAX_VOLUME);
-            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD);
-            //timer.cancel();
-        }
-    }
 
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();

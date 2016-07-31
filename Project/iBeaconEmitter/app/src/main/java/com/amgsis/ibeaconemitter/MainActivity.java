@@ -1,13 +1,16 @@
 package com.amgsis.ibeaconemitter;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelUuid;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -16,14 +19,10 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.w3c.dom.Text;
+import android.widget.Toast;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private AdvertiseData advertiseData;
     private AdvertiseSettings advertiseSettings;
     private AdvertiseCallback advertiseCallback;
+    BluetoothManager bluetoothManager;
     protected BluetoothLeAdvertiser bluetoothLeAdvertiser;
     protected BluetoothAdapter bluetoothAdapter;
 
@@ -57,10 +57,6 @@ public class MainActivity extends AppCompatActivity {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(fabClick);
 
-        // INSTANCIANDO BLUETOOTH ADAPTER E ADVERTISER
-        //bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
-
         // INSTANCIANDO TEXTVIEWS
         uuid = (TextView) findViewById(R.id.uuid);
         minor = (TextView) findViewById(R.id.minor);
@@ -68,11 +64,27 @@ public class MainActivity extends AppCompatActivity {
         txPower = (TextView) findViewById(R.id.txPower);
         beaconId = (TextView) findViewById(R.id.beaconId);
 
-        // CONFIGURANDO EMISOR
-        //checkBluetoothState();
+        // CONFIGURANDO EMISSOR
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null)
+            Toast.makeText(this, "Seu dispositivo não suporta Bluetooth!", Toast.LENGTH_LONG);
+        else if (!bluetoothAdapter.isEnabled()){
+            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
+            if(bluetoothAdapter.isEnabled())
+                bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
+        }
+
         setAdvertiseData();
         setAdvertiseSettings();
         setAdvertiseCallback();
+    }
+
+    void createScanner(){
+        // INSTANCIANDO BLUETOOTH ADAPTER
+        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        checkBluetoothState();
     }
 
     private void checkBluetoothState(){
@@ -82,12 +94,21 @@ public class MainActivity extends AppCompatActivity {
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
         }
+
+        if(bluetoothAdapter.isEnabled())
+            bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
+        else checkBluetoothState();
     }
 
     private void setAdvertiseData() {
         AdvertiseData.Builder mBuilder = new AdvertiseData.Builder();
+        ParcelUuid uuid = new ParcelUuid(UUID.fromString("0CF052C2-97CA-407C-84F8-B62AAC4E9020"));
+        mBuilder.setIncludeDeviceName(true)
+                .setIncludeTxPowerLevel(true)
+                .addServiceUuid(uuid)
+                .addServiceData(uuid, "Data".getBytes(Charset.forName("UTF-8")));
+/*        byte[] uuid = getIdAsByte(UUID.fromString("0CF052C2-97CA-407C-84F8-B62AAC4E9020"));
         ByteBuffer manufacturerData = ByteBuffer.allocate(24);
-        byte[] uuid = getIdAsByte(UUID.fromString("0CF052C2-97CA-407C-84F8-B62AAC4E9020"));
         manufacturerData.put(0, (byte) 0x02); //FIRST BYTE iBeacon
         manufacturerData.put(1, (byte) 0x15); //SECOND BYTE iBeacon
         for (int i = 2; i < 18; i++) manufacturerData.put(i, uuid[i - 2]); //UUID
@@ -96,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         manufacturerData.put(20, (byte) 0x00); //FIRST BYTE Minor
         manufacturerData.put(21, (byte) 0x06); //SECOND BYTE Minor
         manufacturerData.put(22, (byte) 0x46); //Reference TX Power
-        mBuilder.addManufacturerData(224, manufacturerData.array()); //Using Google ID
+        mBuilder.addManufacturerData(224, manufacturerData.array()); //Using Google ID*/
         advertiseData = mBuilder.build();
     }
 
@@ -105,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         mBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
         mBuilder.setConnectable(false);
         mBuilder.setTimeout(0);
-        mBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM);
+        mBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH);
         advertiseSettings = mBuilder.build();
     }
 

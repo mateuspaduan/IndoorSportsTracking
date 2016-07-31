@@ -15,20 +15,35 @@
         android:text="Live Statistcs"
         android:textSize="50sp"
         android:layout_centerHorizontal="true"
-        android:id="@+id/title_tv"/>
+        android:id="@+id/title_tv"
+        android:textStyle="italic"/>
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Iniciar Jogo"
+        android:text="Iniciar"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:layout_width="270dp"
+        android:layout_height="60dp"
+        android:background="@drawable/buttonshape"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="5"
         android:layout_below="@+id/title_tv"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="100dp"
         android:id="@+id/startgame_bt"/>
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
+        android:layout_width="270dp"
+        android:layout_height="60dp"
+        android:background="@drawable/buttonshape"
+        android:shadowColor="#A8A8A8"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="5"
         android:text="Configurações"
         android:layout_below="@+id/startgame_bt"
         android:layout_centerHorizontal="true"

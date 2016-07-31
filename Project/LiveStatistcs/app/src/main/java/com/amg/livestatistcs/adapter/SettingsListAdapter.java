@@ -41,7 +41,7 @@ public class SettingsListAdapter extends BaseAdapter{
     }
 
     @Override
-    public Object getItem(int position) {
+    public Player getItem(int position) {
         return playerList.get(position);
     }
 

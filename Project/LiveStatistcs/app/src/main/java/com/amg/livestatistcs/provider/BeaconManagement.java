@@ -2,6 +2,7 @@ package com.amg.livestatistcs.provider;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.amg.livestatistcs.model.Beacon;
@@ -65,7 +66,9 @@ public class BeaconManagement {
     public ArrayList<String> returnMacs(){
         Type type = new TypeToken<List<String>>(){}.getType(); //Pega tipo do beacon
         String macs = pref.getString(BEACONS, null); //Pega a string em json de beacons
-        ArrayList<String> macsList = gson.fromJson(macs, type); //Transforma JSON em String
+        ArrayList<String> macsList;
+        if(!TextUtils.isEmpty(macs)) macsList = gson.fromJson(macs, type); //Transforma JSON em String
+        else macsList = new ArrayList<>();
         return macsList; //Retorna a lista de beacons
     }
 }

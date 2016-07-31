@@ -1,17 +1,25 @@
 package com.amg.livestatistcs.activity;
 
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.amg.livestatistcs.R;
 import com.amg.livestatistcs.adapter.SettingsListAdapter;
 import com.amg.livestatistcs.model.Player;
+import com.amg.livestatistcs.provider.BeaconManagement;
+import com.amg.livestatistcs.provider.PlayerManagement;
 import com.amg.livestatistcs.provider.SettingsManagement;
 
 import java.util.ArrayList;
@@ -19,8 +27,9 @@ import java.util.ArrayList;
 public class SettingsActivity extends AppCompatActivity {
     EditText XComponent, YComponent, XSize, YSize;
     ListView SettingsListView;
-    Button SaveSettings;
+    PlayerManagement pManagement;
     SettingsManagement sManagement;
+    BeaconManagement bManagement;
     SettingsListAdapter settingsListAdapter;
 
     @Override
@@ -28,41 +37,37 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        XComponent = (EditText) findViewById(R.id.x_et);
-        YComponent = (EditText) findViewById(R.id.y_et);
-        XSize = (EditText) findViewById(R.id.sizex_et);
-        YSize = (EditText) findViewById(R.id.sizey_et);
         SettingsListView = (ListView) findViewById(R.id.settings_list);
-
-        sManagement = new SettingsManagement(getApplicationContext());
-        float values[] = sManagement.retrieveDimensions();
-        XSize.setHint("Tamanho atual: " + Float.toString(values[0]));
-        YSize.setHint("Tamanho atual: " + Float.toString(values[1]));
-        values = sManagement.retrieveDistanceFromCourt();
-        XComponent.setHint("Distância atual: " + Float.toString(values[0]));
-        YComponent.setHint("Distância atual: " + Float.toString(values[1]));
 
         View header = getLayoutInflater().inflate(R.layout.content_settings, null);
 
+        sManagement = new SettingsManagement(getApplicationContext());
+        pManagement = new PlayerManagement(getApplicationContext());
+        bManagement = new BeaconManagement(getApplicationContext());
+        float values[] = sManagement.retrieveDimensions();
+        ((EditText) header.findViewById(R.id.sizex_et)).setHint("Tamanho atual: " + Float.toString(values[0]));
+        ((EditText) header.findViewById(R.id.sizey_et)).setHint("Tamanho atual: " + Float.toString(values[1]));
+        values = sManagement.retrieveDistanceFromCourt();
+        ((EditText) header.findViewById(R.id.x_et)).setHint("Distância atual: " + Float.toString(values[0]));
+        ((EditText) header.findViewById(R.id.y_et)).setHint("Distância atual: " + Float.toString(values[1]));
+
         settingsListAdapter = new SettingsListAdapter(populateList(), this);
-        SettingsListView.setAdapter(settingsListAdapter);
         SettingsListView.addHeaderView(header);
+        SettingsListView.setItemsCanFocus(true);
+        SettingsListView.setAdapter(settingsListAdapter);
     }
 
-    ArrayList<Player> populateList(){
+    public ArrayList<Player> populateList(){
         ArrayList<Player> list = new ArrayList<>();
-        list.add(new Player(18, 150, "10", 4, "Lucas Selani", "89:AB:T3:AR:P9:23"));
-        list.add(new Player(14, 244, "42", 1, "Pablo Bochi", "89:AB:T3:AR:P9:23"));
-        list.add(new Player(21, 135, "34", 2, "Mateus Paduan", "89:AB:T3:AR:P9:23"));
-        list.add(new Player(33, 188, "06", 6, "Leonardo Saldanha", "89:AB:T3:AR:P9:23"));
-        list.add(new Player(5, 89, "99", 3, "Gabriel Bino", "89:AB:T3:AR:P9:23"));
+        ArrayList<String> macs = bManagement.returnMacs();
+        for(String mac : macs){
+            String[] values = pManagement.retrievePlayerSettings(mac);
+            list.add(new Player(values[0], Integer.parseInt(values[1]), values[2], mac));
+        }
         return list;
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-
+    public void updatePlayers(){
         View view = SettingsListView.getAdapter().getView(0, null, null);
         EditText view_xoffset = (EditText) view.findViewById(R.id.x_et);
         EditText view_yoffset = (EditText) view.findViewById(R.id.y_et);
@@ -77,5 +82,28 @@ public class SettingsActivity extends AppCompatActivity {
                     Float.parseFloat(view_ysize.getText().toString()));
             Toast.makeText(getApplicationContext(), "Configurações salvas com sucesso", Toast.LENGTH_LONG).show();
         }
+
+        for(int i=1; i<settingsListAdapter.getCount(); i++){
+            Player player = settingsListAdapter.getItem(i-1);
+            view = settingsListAdapter.getView(i, null, null);
+            EditText name = (EditText) view.findViewById(R.id.name);
+            EditText number = (EditText) view.findViewById(R.id.number_et);
+            EditText mac = (EditText) view.findViewById(R.id.mac_et);
+            Spinner color = (Spinner) view.findViewById(R.id.color_spinner);
+
+            String nameSave = (name.getText() != null) ? name.getText().toString() : player.getName();
+            String numberSave = (number.getText() != null) ? number.getText().toString() : player.getNumber();
+            String macSave = (mac.getText() != null) ? mac.getText().toString() : player.getMac();
+            int colorSave = color.getSelectedItemPosition();
+
+            if(!TextUtils.isEmpty(nameSave) && !TextUtils.isEmpty(macSave) && !TextUtils.isEmpty(numberSave))
+                pManagement.updatePlayerSettings(nameSave, macSave, numberSave, colorSave);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        updatePlayers();
     }
 }
