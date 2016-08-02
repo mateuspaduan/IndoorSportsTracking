@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(View v) {
             if(bluetoothAdapter.isMultipleAdvertisementSupported()){
                 if(bluetoothAdapter.isEnabled()){
+                    Snackbar.make(findViewById(R.id.coordinatorLayout), "Emitindo...", Snackbar.LENGTH_INDEFINITE).show();
                     bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
                     bluetoothLeAdvertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback);
                 }

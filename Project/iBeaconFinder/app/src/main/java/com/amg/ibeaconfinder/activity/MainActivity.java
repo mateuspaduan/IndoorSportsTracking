@@ -115,23 +115,11 @@ public class MainActivity extends AppCompatActivity {
     View.OnClickListener fabClick = new View.OnClickListener(){
         @Override
         public void onClick(View v) {
-            Snackbar.make(findViewById(R.id.coordinatorLayout), "Buscando beacons...", Snackbar.LENGTH_LONG).show();
-            //if(!isScanning){
-                if(btAdapter.isEnabled()){
-                    btLeScanner = btAdapter.getBluetoothLeScanner();
-                    btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
-                    isScanning = true;
-                }
-
-/*                scanHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        isScanning = false;
-                        btLeScanner.stopScan(scanCallback);
-                        Log.i(TAG, "stopping scan");
-                    }
-                }, SCAN_INTERVAL_MS);
-            }*/
+            if(btAdapter.isEnabled()){
+                Snackbar.make(findViewById(R.id.coordinatorLayout), "Buscando beacons...", Snackbar.LENGTH_INDEFINITE).show();
+                btLeScanner = btAdapter.getBluetoothLeScanner();
+                btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
+            }
         }
     };
 
