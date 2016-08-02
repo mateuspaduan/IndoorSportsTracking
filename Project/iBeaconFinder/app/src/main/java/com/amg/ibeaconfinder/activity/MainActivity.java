@@ -108,8 +108,6 @@ public class MainActivity extends AppCompatActivity {
         else if (!btAdapter.isEnabled()){
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
-            if(btAdapter.isEnabled())
-                btLeScanner = btAdapter.getBluetoothLeScanner();
         }
     }
 
@@ -118,11 +116,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             Snackbar.make(findViewById(R.id.coordinatorLayout), "Buscando beacons...", Snackbar.LENGTH_LONG).show();
-            if(!isScanning){
-                btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
-                isScanning = true;
+            //if(!isScanning){
+                if(btAdapter.isEnabled()){
+                    btLeScanner = btAdapter.getBluetoothLeScanner();
+                    btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
+                    isScanning = true;
+                }
 
-                scanHandler.postDelayed(new Runnable() {
+/*                scanHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         isScanning = false;
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, "stopping scan");
                     }
                 }, SCAN_INTERVAL_MS);
-            }
+            }*/
         }
     };
 

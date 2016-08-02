@@ -71,33 +71,10 @@ public class MainActivity extends AppCompatActivity {
         else if (!bluetoothAdapter.isEnabled()){
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
-            if(bluetoothAdapter.isEnabled())
-                bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
         }
-
         setAdvertiseData();
         setAdvertiseSettings();
         setAdvertiseCallback();
-    }
-
-    void createScanner(){
-        // INSTANCIANDO BLUETOOTH ADAPTER
-        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();
-        checkBluetoothState();
-    }
-
-    private void checkBluetoothState(){
-        if (bluetoothAdapter == null)
-            Snackbar.make(findViewById(R.id.coordinatorLayout), "Seu dispositivo não suporta Bluetooth!", Snackbar.LENGTH_LONG).show();
-        else if (!bluetoothAdapter.isEnabled()){
-            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
-        }
-
-        if(bluetoothAdapter.isEnabled())
-            bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
-        else checkBluetoothState();
     }
 
     private void setAdvertiseData() {
@@ -152,8 +129,13 @@ public class MainActivity extends AppCompatActivity {
     View.OnClickListener fabClick = new View.OnClickListener(){
         @Override
         public void onClick(View v) {
-            if(bluetoothAdapter.isMultipleAdvertisementSupported())
-                bluetoothLeAdvertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback);
+            if(bluetoothAdapter.isMultipleAdvertisementSupported()){
+                if(bluetoothAdapter.isEnabled()){
+                    bluetoothLeAdvertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
+                    bluetoothLeAdvertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback);
+                }
+            }
+
             else
                 Snackbar.make(findViewById(R.id.coordinatorLayout), "Seu dispositivo não suporta o Advertiser!", Snackbar.LENGTH_LONG).show();
         }
