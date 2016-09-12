@@ -55,11 +55,13 @@ public class Beacon {
         if (rssi == 0)
             return -1.0;
 
-        double ratio = rssi*1.0/txPower;
+        /*double ratio = rssi*1.0/txPower;
         if (ratio < 1.0)
             return Math.pow(ratio, 10);
 
         else
-            return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
+            return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;*/
+            
+        return Math.pow(10, (rssi+24)-txPower))/-40;    
     }
 }
