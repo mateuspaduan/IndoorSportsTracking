@@ -50,7 +50,7 @@ public class Beacon {
         this.minor = minor;
     }
 
-    public double calculateAccuracy(int txPower, double rssi) {
+    public double calculateAccuracy(double txPower, double rssi) {
 
         if (rssi == 0)
             return -1.0;
@@ -62,6 +62,6 @@ public class Beacon {
         else
             return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;*/
             
-        return Math.pow(10, (rssi+24)-txPower))/-40;    
+        return Math.pow(10, ((rssi-txPower)/-42.119));
     }
 }

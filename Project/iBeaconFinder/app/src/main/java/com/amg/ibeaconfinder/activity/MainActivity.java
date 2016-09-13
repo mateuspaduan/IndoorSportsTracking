@@ -1,5 +1,6 @@
 package com.amg.ibeaconfinder.activity;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -10,12 +11,16 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -29,6 +34,9 @@ import android.widget.Toast;
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
 import com.amg.ibeaconfinder.model.Beacon;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
@@ -56,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
-                    setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
                     .setReportDelay(0)
                     .build();
 
@@ -105,17 +113,47 @@ public class MainActivity extends AppCompatActivity {
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         if (btAdapter == null)
             Toast.makeText(this, "Seu dispositivo não suporta Bluetooth!", Toast.LENGTH_LONG);
-        else if (!btAdapter.isEnabled()){
+        else if (!btAdapter.isEnabled()) {
             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
+        }
+
+        askPermissions();
+    }
+
+    private void askPermissions() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+        }
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
         }
     }
 
 
-    View.OnClickListener fabClick = new View.OnClickListener(){
+    View.OnClickListener fabClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if(btAdapter.isEnabled()){
+            if (btAdapter.isEnabled()) {
                 Snackbar.make(findViewById(R.id.coordinatorLayout), "Buscando beacons...", Snackbar.LENGTH_INDEFINITE).show();
                 btLeScanner = btAdapter.getBluetoothLeScanner();
                 btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
@@ -124,60 +162,59 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
-   private void setScanCallback() {
-       scanCallback = new ScanCallback() {
-           @Override
-           public void onScanResult(int callbackType, ScanResult result) {
-               Log.i("MainActivity", "Callback: Success");
-               ScanRecord scanRecord = result.getScanRecord();
-               if (scanRecord == null) {
-                   Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
-                   return;
-               }
-               else{
-                   byte[] manufacturerData = scanRecord.getBytes(); //GETTING BEACON PDU
-                   byte[] uuidBytes = new byte[16]; // UUID ARRAY
-                   System.arraycopy(manufacturerData, 6, uuidBytes, 0, 16); // COPYING UUID BYTES
-                   String uuid = getGuidFromByteArray(uuidBytes);
-                   int major = twoBytesToShort(manufacturerData[22], manufacturerData[23]);
-                   int minor = twoBytesToShort(manufacturerData[24], manufacturerData[25]);
-                   int txPower = manufacturerData[26]&0xff;
-                   double rssi = result.getRssi();
+    private void setScanCallback() {
+        scanCallback = new ScanCallback() {
+            @Override
+            public void onScanResult(int callbackType, ScanResult result) {
+                Log.i("MainActivity", "Callback: Success");
+                ScanRecord scanRecord = result.getScanRecord();
+                if (scanRecord == null) {
+                    Log.w(TAG, "Null ScanRecord for device " + result.getDevice().getAddress());
+                    return;
+                } else {
+                    byte[] manufacturerData = scanRecord.getBytes(); //GETTING BEACON PDU
+                    byte[] uuidBytes = new byte[16]; // UUID ARRAY
+                    System.arraycopy(manufacturerData, 6, uuidBytes, 0, 16); // COPYING UUID BYTES
+                    String uuid = getGuidFromByteArray(uuidBytes);
+                    int major = twoBytesToShort(manufacturerData[22], manufacturerData[23]);
+                    int minor = twoBytesToShort(manufacturerData[24], manufacturerData[25]);
+                    double txPower = -70;
+                    double rssi = result.getRssi();
 
-                   Beacon beacon = new Beacon();
-                   double distance = beacon.calculateAccuracy(txPower, rssi);
-                   beacon.setUuid(uuid);
-                   beacon.setMajor(Integer.toString(major));
-                   beacon.setMinor(Integer.toString(minor));
-                   beacon.setRssi(Integer.toString(result.getRssi()));
-                   beacon.setDistance(String.valueOf(round(distance, 4))+ "m");
+                    Beacon beacon = new Beacon();
+                    double distance = beacon.calculateAccuracy(txPower, rssi);
+                    beacon.setUuid(uuid);
+                    beacon.setMajor(Integer.toString(major));
+                    beacon.setMinor(Integer.toString(minor));
+                    beacon.setRssi(Integer.toString(result.getRssi()));
+                    beacon.setDistance(String.valueOf(round(distance, 4)) + "m");
 
-                   boolean found = false;
-                   for(int i=0; i<beaconList.size(); i++){
-                       if(beaconList.get(i).getUuid().equals(uuid)){
-                           beaconList.add(i, beacon);
-                           beaconAdapter.notifyItemRemoved(i);
-                           found = true;
-                           break;
-                       }
-                   }
+                    boolean found = false;
+                    for (int i = 0; i < beaconList.size(); i++) {
+                        if (beaconList.get(i).getUuid().equals(uuid)) {
+                            beaconList.add(i, beacon);
+                            beaconAdapter.notifyItemRemoved(i);
+                            found = true;
+                            break;
+                        }
+                    }
 
-                   if(!found) beaconList.add(beacon);
-                   beaconAdapter.notifyDataSetChanged();
+                    if (!found) beaconList.add(beacon);
+                    beaconAdapter.notifyDataSetChanged();
 
                    /*if(distance < 1) beaconNotification(2);
                    else if(distance < 3) beaconNotification(5);
                    else beaconNotification(9);*/
 
-               }
-           }
+                }
+            }
 
-           @Override
-           public void onScanFailed(int errorCode) {
-               Log.e(TAG, "onScanFailed errorCode " + errorCode);
-           }
-       };
-   }
+            @Override
+            public void onScanFailed(int errorCode) {
+                Log.e(TAG, "onScanFailed errorCode " + errorCode);
+            }
+        };
+    }
 
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
