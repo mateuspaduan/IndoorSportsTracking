@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.amg.livestatistcs.R;
+import com.amg.livestatistcs.provider.ApManager;
 
 public class MainActivity extends AppCompatActivity {
     Button StartgameButton, SettingsButton;
@@ -38,5 +39,7 @@ public class MainActivity extends AppCompatActivity {
                 getApplicationContext().startActivity(i);
             }
         });
+
+        if(!ApManager.isApOn(this)) ApManager.configApState(this);
     }
 }
