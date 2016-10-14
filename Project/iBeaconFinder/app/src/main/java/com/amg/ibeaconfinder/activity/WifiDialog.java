@@ -1,6 +1,7 @@
 package com.amg.ibeaconfinder.activity;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.wifi.ScanResult;
@@ -75,7 +76,7 @@ public class WifiDialog extends DialogFragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 WifiConfiguration wifiConfig = new WifiConfiguration();
                 wifiConfig.SSID = String.format("\"%s\"", ssidList.get(position));
-                wifiConfig.preSharedKey = String.format("\"%s\"", "ist12345");
+                wifiConfig.preSharedKey = String.format("\"%s\"", "frajolinha");
 
                 WifiManager wifiManager = (WifiManager) getActivity().getSystemService(WIFI_SERVICE);
                 //remember id
@@ -83,6 +84,13 @@ public class WifiDialog extends DialogFragment {
                 wifiManager.disconnect();
                 wifiManager.enableNetwork(netId, true);
                 wifiManager.reconnect();
+                ((MainActivity) getActivity()).currentSSID = wifiConfig.SSID;
+                ((MainActivity) getActivity()).mDialog = ProgressDialog.show((getActivity()),
+                        "",
+                        "Connecting to Wi-Fi.\nPlease wait...",
+                        true,
+                        true);
+                dismiss();
             }
         });
 

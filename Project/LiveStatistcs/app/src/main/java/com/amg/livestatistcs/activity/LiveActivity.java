@@ -3,14 +3,13 @@ package com.amg.livestatistcs.activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -20,12 +19,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.amg.livestatistcs.R;
 import com.amg.livestatistcs.adapter.LiveListAdapter;
+import com.amg.livestatistcs.alljoyn.*;
 import com.amg.livestatistcs.model.Beacon;
 import com.amg.livestatistcs.model.Player;
-import com.amg.livestatistcs.provider.BeaconManagement;
 import com.amg.livestatistcs.provider.MatchManagement;
 import com.amg.livestatistcs.provider.PlayerManagement;
 import com.amg.livestatistcs.provider.SettingsManagement;
@@ -34,8 +34,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOffsetChangedListener {
@@ -61,6 +59,37 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
                                   R.drawable.green_a400, R.drawable.indigo_500, R.drawable.lblue_a100,
                                   R.drawable.lgreen_a200, R.drawable.orange_800, R.drawable.pink_300,
                                   R.drawable.red_500, R.drawable.teal_a200, R.drawable.yellow_500};
+    private final String TAG = "LiveActivity";
+    private Handler mBusHandler;
+
+    static {
+        System.loadLibrary("alljoyn_java");
+    }
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constants.MESSAGE_PING:
+                    Util.logInfo(TAG, (String) msg.obj);
+                    break;
+                case Constants.MESSAGE_PING_REPLY:
+                    Util.logInfo(TAG, (String) msg.obj);
+                    break;
+                case Constants.MESSAGE_POST_TOAST:
+                    Toast.makeText(getApplicationContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
+                    break;
+                case Constants.FINISH:
+                    finish();
+                    break;
+                case Constants.MESSAGE_SIGNAL:
+                    String message = (String) msg.obj;
+                    //TODO
+                default:
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,14 +136,23 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
                     startRepeatingTask();
                     fab.setImageResource(R.drawable.ic_play_arrow_white_24dp);
                     startgame = false;
+
+                    /* Make all AllJoyn calls through a separate handler thread to prevent blocking the UI. */
+                    HandlerThread busThread = new HandlerThread("AllJoynBusHandler");
+                    busThread.start();
+                    mBusHandler = new AllJoynBusHandler(busThread.getLooper(),
+                            getApplicationContext(), getPackageName(), mHandler);
+                    mBusHandler.sendEmptyMessage(Constants.CONNECT);
                 }
                 else{
                     stopRepeatingTask();
                     fab.setImageResource(R.drawable.ic_stop_white_24dp);
                     startgame = true;
+                    mBusHandler.sendEmptyMessage(Constants.DISCONNECT);
                 }
             }
         });
+
     }
 
     Runnable statusChecker = new Runnable() {
@@ -305,7 +343,15 @@ public class LiveActivity extends AppCompatActivity implements AppBarLayout.OnOf
             getSupportActionBar().setTitle(R.string.app_name);
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        /* Disconnect to prevent any resource leaks. */
+        mBusHandler.sendEmptyMessage(Constants.DISCONNECT);
+    }
 }
+
 
 /*  Beacon beacon1 = beaconList.get(0);
     Beacon beacon2 = beaconList.get(1);

@@ -1,6 +1,7 @@
 package com.amg.ibeaconfinder.activity;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -9,14 +10,23 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -35,6 +45,8 @@ import android.widget.Toast;
 
 import com.amg.ibeaconfinder.R;
 import com.amg.ibeaconfinder.adapter.BeaconAdapter;
+import com.amg.ibeaconfinder.alljoyn.AllJoynBusHandler;
+import com.amg.ibeaconfinder.alljoyn.Constants;
 import com.amg.ibeaconfinder.model.Beacon;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -51,9 +63,12 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BT = 1;
     private static final String TAG = "MainActivity";
-    private static final int SCAN_INTERVAL_MS = 10000;
-    boolean isScanning = false;
-    private Handler scanHandler;
+    private static final int INTERVAL = 1000;
+    private Handler handler;
+    private AllJoynBusHandler mBusHandler;
+    public String currentSSID = "";
+    private int time = 0;
+    private Beacon beacon = null;
 
     private BluetoothAdapter btAdapter;
     private BluetoothLeScanner btLeScanner;
@@ -63,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Beacon> beaconList;
     private RecyclerView recyclerView;
+
+    public ProgressDialog mDialog;
 
     private static final ScanSettings SCAN_SETTINGS =
             new ScanSettings.Builder().
@@ -79,6 +96,10 @@ public class MainActivity extends AppCompatActivity {
         List<ScanFilter> scanFilters = new ArrayList<>();
         scanFilters.add(SCAN_FILTER);
         return scanFilters;
+    }
+
+    static {
+        System.loadLibrary("alljoyn_java");
     }
 
     @Override
@@ -107,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(fabClick);
 
         // HANDLER
-        scanHandler = new Handler();
+        handler = new Handler();
 
         // SCAN CALLBACK AND SCANNER
         setScanCallback();
@@ -121,6 +142,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         askPermissions();
+
+        /* Make all AllJoyn calls through a separate handler thread to prevent blocking the UI. */
+        HandlerThread busThread = new HandlerThread("BusHandler");
+        busThread.start();
+        mBusHandler = new AllJoynBusHandler(busThread.getLooper(), this, getPackageName(), mHandler);
     }
 
     private void askPermissions() {
@@ -160,6 +186,9 @@ public class MainActivity extends AppCompatActivity {
                 btLeScanner = btAdapter.getBluetoothLeScanner();
                 btLeScanner.startScan(SCAN_FILTERS, SCAN_SETTINGS, scanCallback);
             }
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+            registerReceiver(wifiReceiver, intentFilter);
             FragmentManager fragmentManager = getSupportFragmentManager();
             DialogFragment wifiDialog = new WifiDialog();
             wifiDialog.show(fragmentManager, "Main");
@@ -186,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
                     double txPower = -70;
                     double rssi = result.getRssi();
 
-                    Beacon beacon = new Beacon();
+                    beacon = new Beacon();
                     double distance = beacon.calculateAccuracy(txPower, rssi);
                     beacon.setUuid(uuid);
                     beacon.setMajor(Integer.toString(major));
@@ -206,11 +235,6 @@ public class MainActivity extends AppCompatActivity {
 
                     if (!found) beaconList.add(beacon);
                     beaconAdapter.notifyDataSetChanged();
-
-                   /*if(distance < 1) beaconNotification(2);
-                   else if(distance < 3) beaconNotification(5);
-                   else beaconNotification(9);*/
-
                 }
             }
 
@@ -220,6 +244,97 @@ public class MainActivity extends AppCompatActivity {
             }
         };
     }
+
+    private BroadcastReceiver wifiReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            final String action = intent.getAction();
+
+            if(action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)){
+                NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                if(ConnectivityManager.TYPE_WIFI == networkInfo.getType()){
+                    if(networkInfo.isConnected()){
+                        startAllJoinCommunication();
+                    }
+                }
+            }
+        }
+    };
+
+    private void startAllJoinCommunication() {
+        WifiManager wifiManager = (WifiManager) getSystemService (Context.WIFI_SERVICE);
+        WifiInfo info = wifiManager.getConnectionInfo ();
+        String ssid = info.getSSID();
+        if(ssid.equals(currentSSID)){
+            if(mDialog != null) mDialog.dismiss();
+            time = 0;
+            /* Connect to an AllJoyn object. */
+            mBusHandler.sendEmptyMessage(Constants.CONNECT);
+            mHandler.sendEmptyMessage(Constants.MESSAGE_START_PROGRESS_DIALOG);
+            unregisterReceiver(wifiReceiver);
+            startRepeatingTask.run();
+        }
+    }
+
+    Runnable startRepeatingTask = new Runnable() {
+        @Override
+        public void run() {
+            try{
+                time++;
+                new sendMessageAsync().execute();
+            }finally {
+                handler.postDelayed(startRepeatingTask, INTERVAL);
+            }
+        }
+    };
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constants.MESSAGE_PING:
+                    String ping = (String) msg.obj;
+                    break;
+                case Constants.MESSAGE_PING_REPLY:
+                    String ret = (String) msg.obj;
+                    break;
+                case Constants.MESSAGE_POST_TOAST:
+                    Toast.makeText(getApplicationContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
+                    break;
+                case Constants.MESSAGE_START_PROGRESS_DIALOG:
+                    if(mDialog != null) mDialog.dismiss();
+                    mDialog = ProgressDialog.show(MainActivity.this,
+                            "",
+                            "Finding Simple Service.\nPlease wait...",
+                            true,
+                            true);
+                    break;
+                case Constants.MESSAGE_STOP_PROGRESS_DIALOG:
+                    mDialog.dismiss();
+                    break;
+                case Constants.FINISH:
+                    finish();
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    private class sendMessageAsync extends AsyncTask<Void, Void, Integer>{
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            if(beacon != null){
+                String beaconInfo = time + "," + beacon.getDistance() + "," + beacon.getUuid();
+                Message msg = mBusHandler.obtainMessage(Constants.MESSAGE, beaconInfo);
+                mBusHandler.sendMessage(msg);
+            }
+            return null;
+        }
+    }
+    //---------------------------------------------------------------------------------------------
 
     public static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
@@ -266,5 +381,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+    @Override
+
+    protected void onDestroy() {
+        super.onDestroy();
+
+        /* Disconnect to prevent resource leaks. */
+        mBusHandler.sendEmptyMessage(Constants.DISCONNECT);
     }
 }
